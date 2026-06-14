@@ -11,6 +11,7 @@ import { useServiceLaunch } from "@/context/ServiceLaunchProvider";
 import { getServiceIcon } from "@/lib/service-icons";
 import { getShellTokens } from "@/theme/shell-tokens";
 import type { PlatformServiceConfig } from "@/config/platform-services";
+import { getServiceLaunchUrl } from "@/lib/platform-hosts";
 
 interface HubQuickAccessProps {
   services: PlatformServiceConfig[];
@@ -48,7 +49,7 @@ function QuickChip({
           color: service.color,
           gradient: service.gradient,
           icon: service.icon,
-          url: service.url,
+          url: getServiceLaunchUrl(service.slug),
         });
       }}
       sx={{

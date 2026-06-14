@@ -1,0 +1,23 @@
+# Subdomini Coresuite (CNAME → stesso origin Node.js di coresuite.it)
+coresuite.it
+business.coresuite.it
+operations.coresuite.it
+tickets.coresuite.it
+appuntamenti.coresuite.it
+caf-patronato.coresuite.it
+entrate-uscite.coresuite.it
+energia.coresuite.it
+anpr.coresuite.it
+cie.coresuite.it
+visure-cr.coresuite.it
+brt.coresuite.it
+logistica.coresuite.it
+marketing.coresuite.it
+fedelta.coresuite.it
+curriculum.coresuite.it
+aci.coresuite.it
+telegrammi.coresuite.it
+posta-telematica.coresuite.it
+express.coresuite.it
+opportunities.coresuite.it
+portale.coresuite.it

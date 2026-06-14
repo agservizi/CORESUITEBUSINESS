@@ -8,6 +8,7 @@ import BusinessCenterIcon from "@mui/icons-material/BusinessCenter";
 import { useServiceLaunch } from "@/context/ServiceLaunchProvider";
 import { getShellTokens, shellPanelSx } from "@/theme/shell-tokens";
 import { hubScaleIn, hubSpotlightHover, hubStaggerFast } from "@/lib/hub-motion";
+import { getServiceLaunchUrl } from "@/lib/platform-hosts";
 
 const SPOTLIGHT = [
   {
@@ -68,7 +69,7 @@ export default function HubSpotlight() {
                 color: item.color,
                 gradient: item.gradient,
                 icon: item.slug === "operations" ? "Dashboard" : "BusinessCenter",
-                url: item.url,
+                url: getServiceLaunchUrl(item.slug),
               });
             }}
             sx={[

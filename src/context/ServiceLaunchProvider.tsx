@@ -24,6 +24,7 @@ import {
 } from "@/lib/service-launch";
 import { getShellTokens } from "@/theme/shell-tokens";
 import { recordRecentService } from "@/lib/hub-preferences";
+import { resolveNavigationTarget } from "@/lib/platform-hosts";
 
 const ICONS: Record<string, React.ElementType> = {
   BusinessCenter: BusinessCenterIcon,
@@ -65,7 +66,12 @@ export function ServiceLaunchProvider({ children }: { children: ReactNode }) {
           gradient: target.gradient,
           icon: target.icon,
         });
-        router.push(target.url);
+        const destination = resolveNavigationTarget(target.url);
+        if (destination.startsWith("http://") || destination.startsWith("https://")) {
+          window.location.href = destination;
+        } else {
+          router.push(destination);
+        }
       }, LAUNCH_DURATION_MS - 120);
 
       window.setTimeout(() => {

@@ -18,6 +18,7 @@ import SearchIcon from "@mui/icons-material/Search";
 import { getServiceIcon } from "@/lib/service-icons";
 import { useServiceLaunch } from "@/context/ServiceLaunchProvider";
 import type { PlatformServiceConfig } from "@/config/platform-services";
+import { getServiceLaunchUrl } from "@/lib/platform-hosts";
 import { getShellTokens, shellDialogPaperSx } from "@/theme/shell-tokens";
 import { useAiAssistantOptional } from "@/context/AiAssistantProvider";
 import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
@@ -58,7 +59,7 @@ export default function HubCommandPalette({ open, onClose, services }: HubComman
       color: service.color,
       gradient: service.gradient,
       icon: service.icon,
-      url: service.url,
+      url: getServiceLaunchUrl(service.slug),
     });
   }
 

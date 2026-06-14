@@ -6,6 +6,7 @@ import PremiumServiceCard from "./PremiumServiceCard";
 import { HUB_CATEGORIES, filterByCategory, type HubCategory } from "@/lib/hub-categories";
 import { getServiceCategory } from "@/lib/hub-categories";
 import type { PlatformServiceConfig } from "@/config/platform-services";
+import { getServiceLaunchUrl } from "@/lib/platform-hosts";
 import { getShellTokens } from "@/theme/shell-tokens";
 import { hubGridItem } from "@/lib/hub-motion";
 
@@ -119,6 +120,7 @@ export default function HubServiceExplorer({
               >
                 <PremiumServiceCard
                   {...service}
+                  url={getServiceLaunchUrl(service.slug)}
                   index={startIndex + i}
                   categoryLabel={CATEGORY_LABELS[getServiceCategory(service.slug)]}
                   pinned={pinnedSlugs.includes(service.slug)}

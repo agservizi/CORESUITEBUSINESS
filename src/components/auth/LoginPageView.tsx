@@ -28,6 +28,7 @@ import ThemeModeToggle from "@/components/layout/ThemeModeToggle";
 import LoginBrandPanel from "@/components/auth/LoginBrandPanel";
 import HubAmbientBackground from "@/components/hub/HubAmbientBackground";
 import { hubFadeUp } from "@/lib/hub-motion";
+import { resolveNavigationTarget } from "@/lib/platform-hosts";
 
 const GRADIENT = "linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)";
 
@@ -80,7 +81,12 @@ export default function LoginPageView() {
         return;
       }
 
-      router.push(data.redirectTo || "/dashboard");
+      const destination = resolveNavigationTarget(data.redirectTo || "/dashboard");
+      if (destination.startsWith("http://") || destination.startsWith("https://")) {
+        window.location.href = destination;
+      } else {
+        router.push(destination);
+      }
       router.refresh();
     } catch {
       setError("Errore di connessione. Riprova.");

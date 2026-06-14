@@ -7,6 +7,28 @@ const JWT_SECRET = new TextEncoder().encode(
   process.env.NEXTAUTH_SECRET || "coresuite-secret"
 );
 
+function getCookieDomain(): string | undefined {
+  const root =
+    process.env.PLATFORM_ROOT_DOMAIN ||
+    process.env.NEXT_PUBLIC_PLATFORM_ROOT_DOMAIN;
+  if (process.env.NODE_ENV === "production" && root) {
+    return `.${root}`;
+  }
+  return undefined;
+}
+
+export function getSessionCookieBase(maxAge: number) {
+  const domain = getCookieDomain();
+  return {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax" as const,
+    maxAge,
+    path: "/",
+    ...(domain ? { domain } : {}),
+  };
+}
+
 export async function hashPassword(password: string) {
   return bcrypt.hash(password, 12);
 }

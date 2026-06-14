@@ -1,0 +1,28 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx create-next-app@latest . --typescript --tailwind=false --eslint --app --src-dir --import-alias \"@/*\" --yes)",
+      "Bash(npx create-next-app@latest coresuite --typescript --tailwind=false --eslint --app --src-dir --import-alias \"@/*\" --yes)",
+      "Bash(npm install *)",
+      "Bash(npx prisma *)",
+      "Bash(npx tsc *)",
+      "Bash(npm run *)",
+      "Bash(Read \"C:\\\\Users\\\\carva\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\C--Users-carva-Desktop-Progetti-CORESUITE BUSINESS\\\\88d4e04a-5398-4596-be41-de7afcc8c945\\\\tasks\\\\b320b2q20.output\")",
+      "Read(//c/Users/carva/AppData/Local/Temp/claude/C--Users-carva-Desktop-Progetti-CORESUITE BUSINESS/88d4e04a-5398-4596-be41-de7afcc8c945/tasks/**)",
+      "Bash(pg_isready)",
+      "Bash(psql --version)",
+      "PowerShell(Get-Command psql -ErrorAction SilentlyContinue)",
+      "Bash(DATABASE_URL=\"postgresql://postgres:postgres@localhost:5432/coresuite\" node prisma/seed.mjs)",
+      "mcp__Claude_in_Chrome__tabs_context_mcp",
+      "mcp__Claude_in_Chrome__navigate",
+      "mcp__Claude_in_Chrome__javascript_tool",
+      "Bash(echo \"PID: $!\")",
+      "Read(//tmp/**)",
+      "mcp__Claude_in_Chrome__browser_batch",
+      "Bash(DATABASE_URL=\"postgresql://postgres:postgres@localhost:5432/coresuite\" node prisma/seed-crm.mjs)",
+      "Bash(DATABASE_URL=postgresql://postgres:postgres@localhost:5432/coresuite node -e ' *)",
+      "Bash(grep -i \"error\\\\|Error\\\\|500\" \"/c/Users/carva/.claude/projects/C--Users-carva-Desktop-Progetti-CORESUITE-BUSINESS/88d4e04a-5398-4596-be41-de7afcc8c945/tool-results/bz9srou1o.txt\" | grep -v \"Hydration\\\\|uncaughtError\\\\|browser\" | tail -20)",
+      "Bash(pkill -f \"next dev\")"
+    ]
+  }
+}

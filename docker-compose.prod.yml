@@ -1,0 +1,81 @@
+name: coresuite-business
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: coresuite-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-coresuite}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-coresuite}"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+    networks:
+      - coresuite
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: coresuite-app
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      NODE_ENV: production
+      HOSTNAME: 0.0.0.0
+      PORT: 3000
+      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-coresuite}?schema=public
+      RUN_MIGRATIONS: "true"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - coresuite
+
+  seed:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: builder
+    container_name: coresuite-seed
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-coresuite}?schema=public
+    command: npx tsx prisma/seed.ts
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - coresuite
+    profiles:
+      - init
+
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    container_name: coresuite-cloudflared
+    restart: unless-stopped
+    command: tunnel --no-autoupdate run
+    environment:
+      TUNNEL_TOKEN: ${CLOUDFLARE_TUNNEL_TOKEN}
+    depends_on:
+      - app
+    networks:
+      - coresuite
+    profiles:
+      - cloudflare
+
+networks:
+  coresuite:
+    name: coresuite-network
+
+volumes:
+  postgres_data:
+    name: coresuite-postgres-data

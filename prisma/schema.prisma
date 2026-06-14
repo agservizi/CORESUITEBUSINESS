@@ -1,0 +1,1650 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ─── AUTH ──────────────────────────────────────────────────────────────────
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  username      String?   @unique
+  name          String?
+  firstName     String?
+  lastName      String?
+  password      String
+  role          Role      @default(OPERATORE)
+  avatar        String?
+  mfaSecret     String?
+  mfaEnabled    Boolean   @default(false)
+  clientId      String?   @unique
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  lastLoginAt   DateTime?
+  passwordChangedAt DateTime?
+
+  permissions      ServicePermission[]
+  sessions         Session[]
+  assignedLeads    Lead[]              @relation("LeadAssignee")
+  activities       Activity[]
+  notes            Note[]
+  assignedTickets  Ticket[]            @relation("TicketAssignee")
+  createdTickets   Ticket[]            @relation("TicketCreator")
+  ticketMessages   TicketMessage[]
+  loginAudits      LoginAudit[]
+  auditLogs        AuditLog[]
+  clientProfile    Client?             @relation("UserClient", fields: [clientId], references: [id], onDelete: SetNull)
+  collaboratorLinks CollaboratorCustomer[] @relation("CollaboratorUser")
+  collaboratorOpportunities Opportunity[] @relation("OpportunityCollaborator")
+  managedOpportunities      Opportunity[] @relation("OpportunityManager")
+  notifications   Notification[]
+  expressSales    ExpressSale[]
+  handledExpressRequests ExpressRequest[] @relation("ExpressRequestHandler")
+  cashSessionsOpened CashRegisterSession[] @relation("CashSessionOpened")
+  cashSessionsClosed CashRegisterSession[] @relation("CashSessionClosed")
+  webQuotes          WebQuote[]            @relation("WebQuoteAuthor")
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  userId    String
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Service {
+  id          String   @id @default(cuid())
+  slug        String   @unique
+  name        String
+  description String?
+  icon        String?
+  color       String?
+  url         String?
+  isActive    Boolean  @default(true)
+  order       Int      @default(0)
+  createdAt   DateTime @default(now())
+  permissions ServicePermission[]
+}
+
+model ServicePermission {
+  id        String  @id @default(cuid())
+  userId    String
+  serviceId String
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  service   Service @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  @@unique([userId, serviceId])
+}
+
+// ─── CRM ───────────────────────────────────────────────────────────────────
+
+model Client {
+  id            String        @id @default(cuid())
+  mysqlId       Int?          @unique
+  name          String
+  companyName   String?
+  email         String?
+  phone         String?
+  website       String?
+  address       String?
+  city          String?
+  country       String        @default("IT")
+  taxCode       String?
+  vatNumber     String?
+  type          ClientType    @default(COMPANY)
+  status        ClientStatus  @default(ACTIVE)
+  morosityFlag  Boolean       @default(false)
+  morosityScore MorosityScore @default(OK)
+  morosityNote  String?
+  tags          String[]
+  notes         Note[]
+  leads         Lead[]
+  deals         Deal[]
+  activities    Activity[]
+  tickets       Ticket[]
+  appointments  Appointment[]
+  practices     Practice[]
+  cashMovements CashMovement[]
+  energyContracts EnergyContract[]
+  anprRequests  AnprRequest[]
+  cieBookings   CieBooking[]
+  visureCases   VisureCase[]
+  shipments     Shipment[]
+  pickupPackages PickupPackage[]
+  loyaltyPoints LoyaltyPoint[]
+  curricula     CurriculumRecord[]
+  aciPractices  AciPractice[]
+  documents     Document[]
+  payments      Payment[]
+  morosityLogs  MorosityLog[]
+  opportunities Opportunity[]
+  collaboratorLinks CollaboratorCustomer[]
+  expressSales  ExpressSale[]
+  expressRequests ExpressRequest[]
+  expressPortal ExpressPortalClient?
+  pecMailboxes  PecMailbox[]
+  postaMessages PostaMessage[]
+  webProjects   WebProject[]
+  webQuotes     WebQuote[]
+  portalUser    User?         @relation("UserClient")
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  @@index([email])
+}
+
+model Lead {
+  id            String      @id @default(cuid())
+  title         String
+  clientId      String?
+  client        Client?     @relation(fields: [clientId], references: [id])
+  contactName   String?
+  contactEmail  String?
+  contactPhone  String?
+  source        LeadSource  @default(OTHER)
+  status        LeadStatus  @default(NEW)
+  priority      Priority    @default(MEDIUM)
+  value         Float?
+  assigneeId    String?
+  assignee      User?       @relation("LeadAssignee", fields: [assigneeId], references: [id])
+  pipelineId    String?
+  pipeline      Pipeline?   @relation(fields: [pipelineId], references: [id])
+  stageId       String?
+  stage         PipelineStage? @relation(fields: [stageId], references: [id])
+  expectedClose DateTime?
+  notes         Note[]
+  activities    Activity[]
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+}
+
+model Deal {
+  id            String      @id @default(cuid())
+  title         String
+  clientId      String
+  client        Client      @relation(fields: [clientId], references: [id])
+  value         Float
+  currency      String      @default("EUR")
+  status        DealStatus  @default(OPEN)
+  probability   Int         @default(50)
+  expectedClose DateTime?
+  closedAt      DateTime?
+  notes         Note[]
+  activities    Activity[]
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+}
+
+model Pipeline {
+  id        String          @id @default(cuid())
+  name      String
+  isDefault Boolean         @default(false)
+  stages    PipelineStage[]
+  leads     Lead[]
+  createdAt DateTime        @default(now())
+}
+
+model PipelineStage {
+  id         String   @id @default(cuid())
+  name       String
+  order      Int
+  color      String   @default("#6366f1")
+  pipelineId String
+  pipeline   Pipeline @relation(fields: [pipelineId], references: [id], onDelete: Cascade)
+  leads      Lead[]
+}
+
+model Note {
+  id         String    @id @default(cuid())
+  content    String
+  authorId   String
+  author     User      @relation(fields: [authorId], references: [id])
+  clientId   String?
+  client     Client?   @relation(fields: [clientId], references: [id])
+  leadId     String?
+  lead       Lead?     @relation(fields: [leadId], references: [id])
+  dealId     String?
+  deal       Deal?     @relation(fields: [dealId], references: [id])
+  createdAt  DateTime  @default(now())
+}
+
+model Activity {
+  id          String       @id @default(cuid())
+  type        ActivityType
+  title       String
+  description String?
+  dueAt       DateTime?
+  doneAt      DateTime?
+  isDone      Boolean      @default(false)
+  authorId    String
+  author      User         @relation(fields: [authorId], references: [id])
+  clientId    String?
+  client      Client?      @relation(fields: [clientId], references: [id])
+  leadId      String?
+  lead        Lead?        @relation(fields: [leadId], references: [id])
+  dealId      String?
+  deal        Deal?        @relation(fields: [dealId], references: [id])
+  createdAt   DateTime     @default(now())
+}
+
+// ─── ENUMS ─────────────────────────────────────────────────────────────────
+
+enum Role {
+  SUPER_ADMIN
+  ADMIN
+  MANAGER
+  OPERATORE
+  PATRONATO
+  CLIENTE
+  COLLABORATORE
+}
+
+enum MorosityScore {
+  OK
+  ATTENZIONE
+  BLOCCATO
+}
+
+enum TicketType {
+  SUPPORT
+  TECH
+  ADMIN
+  SALES
+}
+
+enum TicketStatus {
+  OPEN
+  IN_PROGRESS
+  WAITING_CLIENT
+  WAITING_PARTNER
+  RESOLVED
+  CLOSED
+  ARCHIVED
+}
+
+enum TicketChannel {
+  PORTAL
+  EMAIL
+  PHONE
+  INTERNAL
+}
+
+enum CashMovementType {
+  ENTRATA
+  USCITA
+}
+
+enum PracticeCategory {
+  CAF
+  PATRONATO
+}
+
+enum PracticeStatus {
+  BOZZA
+  IN_LAVORAZIONE
+  INVIATA
+  COMPLETATA
+  ANNULLATA
+}
+
+enum ShipmentStatus {
+  REGISTRATO
+  IN_ATTESA
+  IN_CORSO
+  CONSEGNATO
+  PROBLEMA
+  ANNULLATO
+}
+
+enum PickupStatus {
+  SEGNALATO
+  RICEVUTO
+  PRONTO
+  RITIRATO
+  ANNULLATO
+}
+
+enum CampaignStatus {
+  DRAFT
+  SCHEDULED
+  SENDING
+  SENT
+  CANCELLED
+}
+
+enum SubscriberStatus {
+  ACTIVE
+  UNSUBSCRIBED
+  BOUNCED
+}
+
+enum ClientType {
+  COMPANY
+  INDIVIDUAL
+  FREELANCE
+}
+
+enum ClientStatus {
+  ACTIVE
+  INACTIVE
+  PROSPECT
+  CHURNED
+}
+
+enum LeadSource {
+  WEBSITE
+  REFERRAL
+  SOCIAL
+  EMAIL
+  PHONE
+  EVENT
+  OTHER
+}
+
+enum LeadStatus {
+  NEW
+  CONTACTED
+  QUALIFIED
+  PROPOSAL
+  NEGOTIATION
+  WON
+  LOST
+}
+
+enum DealStatus {
+  OPEN
+  WON
+  LOST
+  ON_HOLD
+}
+
+enum WebQuoteStatus {
+  DRAFT
+  SENT
+  ACCEPTED
+  REJECTED
+  EXPIRED
+}
+
+enum Priority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+enum ActivityType {
+  CALL
+  EMAIL
+  MEETING
+  TASK
+  NOTE
+  DEMO
+}
+
+// ─── Sicurezza & Audit ───────────────────────────────────────────────────────
+
+model LoginAudit {
+  id        String   @id @default(cuid())
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  email     String
+  success   Boolean
+  ipAddress String?
+  userAgent String?
+  reason    String?
+  createdAt DateTime @default(now())
+
+  @@index([email, createdAt])
+  @@index([userId])
+}
+
+model LoginAttempt {
+  id          String   @id @default(cuid())
+  email       String
+  ipAddress   String?
+  attempts    Int      @default(1)
+  lockedUntil DateTime?
+  updatedAt   DateTime @updatedAt
+
+  @@unique([email, ipAddress])
+  @@index([email])
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  action    String
+  entity    String?
+  entityId  String?
+  metadata  Json?
+  ipAddress String?
+  createdAt DateTime @default(now())
+
+  @@index([userId, createdAt])
+  @@index([entity, entityId])
+}
+
+// ─── Ticket ──────────────────────────────────────────────────────────────────
+
+model Ticket {
+  id            String        @id @default(cuid())
+  code          String        @unique
+  clientId      String?
+  client        Client?       @relation(fields: [clientId], references: [id], onDelete: SetNull)
+  customerName  String?
+  customerEmail String?
+  customerPhone String?
+  subject       String
+  type          TicketType    @default(SUPPORT)
+  priority      Priority      @default(MEDIUM)
+  status        TicketStatus  @default(OPEN)
+  channel       TicketChannel @default(INTERNAL)
+  assignedToId  String?
+  assignedTo    User?         @relation("TicketAssignee", fields: [assignedToId], references: [id], onDelete: SetNull)
+  createdById   String?
+  createdBy     User?         @relation("TicketCreator", fields: [createdById], references: [id], onDelete: SetNull)
+  tags          String[]
+  slaDueAt      DateTime?
+  lastMessageAt DateTime?
+  messages      TicketMessage[]
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  @@index([status])
+  @@index([priority])
+  @@index([clientId])
+  @@index([assignedToId])
+  @@index([slaDueAt])
+}
+
+model TicketMessage {
+  id             String   @id @default(cuid())
+  ticketId       String
+  ticket         Ticket   @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  authorId       String?
+  author         User?    @relation(fields: [authorId], references: [id], onDelete: SetNull)
+  authorName     String
+  body           String
+  isInternal     Boolean  @default(false)
+  statusSnapshot String?
+  createdAt      DateTime @default(now())
+
+  @@index([ticketId, createdAt])
+}
+
+// ─── Appuntamenti ─────────────────────────────────────────────────────────────
+
+model Appointment {
+  id          String   @id @default(cuid())
+  clientId    String
+  client      Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  title       String
+  serviceType String
+  assignee    String?
+  location    String?
+  status      String   @default("Programmato")
+  startsAt    DateTime
+  endsAt      DateTime?
+  notes       String?
+  googleEventId String?
+  googleSyncedAt DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([clientId])
+  @@index([startsAt])
+  @@index([status])
+}
+
+// ─── CAF / Patronato ─────────────────────────────────────────────────────────
+
+model Practice {
+  id          String           @id @default(cuid())
+  code        String           @unique
+  clientId    String
+  client      Client           @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  category    PracticeCategory
+  practiceType String
+  status      PracticeStatus   @default(BOZZA)
+  year        Int?
+  assignee    String?
+  notes       String?
+  submittedAt DateTime?
+  completedAt DateTime?
+  priority    Int              @default(0)
+  dueDate     DateTime?
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+  events      PracticeEvent[]
+
+  @@index([clientId])
+  @@index([category, status])
+}
+
+model PracticeEvent {
+  id         String   @id @default(cuid())
+  practiceId String
+  practice   Practice @relation(fields: [practiceId], references: [id], onDelete: Cascade)
+  eventType  String
+  note       String?
+  createdBy  String?
+  createdAt  DateTime @default(now())
+
+  @@index([practiceId])
+}
+
+// ─── Entrate / Uscite ────────────────────────────────────────────────────────
+
+model CashMovement {
+  id              String           @id @default(cuid())
+  clientId        String?
+  client          Client?          @relation(fields: [clientId], references: [id], onDelete: SetNull)
+  priceListItemId String?
+  type            CashMovementType @default(ENTRATA)
+  description     String
+  reference       String?
+  method          String           @default("Bonifico")
+  status          String           @default("In lavorazione")
+  amount          Decimal          @default(0) @db.Decimal(10, 2)
+  quantity        Int              @default(1)
+  unitPrice       Decimal          @default(0) @db.Decimal(10, 2)
+  resellerCost    Decimal?         @db.Decimal(10, 2)
+  clientPrice     Decimal?         @db.Decimal(10, 2)
+  margin          Decimal?         @db.Decimal(10, 2)
+  dueDate         DateTime?
+  paidAt          DateTime?
+  attachmentUrl   String?
+  notes           String?
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  expressSale     ExpressSale?
+
+  @@index([clientId])
+  @@index([status])
+  @@index([type])
+  @@index([paidAt])
+}
+
+enum CashRegisterSessionStatus {
+  OPEN
+  CLOSED
+}
+
+model CashRegisterSession {
+  id                    String                    @id @default(cuid())
+  businessDate          DateTime                  @db.Date
+  status                CashRegisterSessionStatus @default(OPEN)
+  openingAmount         Decimal                   @db.Decimal(10, 2)
+  closingAmount         Decimal?                  @db.Decimal(10, 2)
+  expectedClosingAmount Decimal?                  @db.Decimal(10, 2)
+  variance              Decimal?                  @db.Decimal(10, 2)
+  openedAt              DateTime                  @default(now())
+  closedAt              DateTime?
+  openedById            String
+  openedBy              User                      @relation("CashSessionOpened", fields: [openedById], references: [id])
+  closedById            String?
+  closedBy              User?                     @relation("CashSessionClosed", fields: [closedById], references: [id], onDelete: SetNull)
+  openingNotes          String?
+  closingNotes          String?
+  journal               Json?
+  createdAt             DateTime                  @default(now())
+  updatedAt             DateTime                  @updatedAt
+
+  @@unique([businessDate])
+  @@index([status])
+  @@index([businessDate])
+}
+
+// ─── Energia ─────────────────────────────────────────────────────────────────
+
+model EnergyContract {
+  id           String   @id @default(cuid())
+  clientId     String
+  client       Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  pod          String?
+  pdr          String?
+  supplier     String?
+  contractType String?
+  status       String   @default("In attivazione")
+  startDate    DateTime?
+  endDate      DateTime?
+  notes        String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  emailLogs    EnergyEmailLog[]
+
+  @@index([clientId])
+  @@index([status])
+}
+
+// ─── ANPR / CIE ──────────────────────────────────────────────────────────────
+
+model AnprRequest {
+  id          String   @id @default(cuid())
+  clientId    String
+  client      Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  requestType String
+  status      String   @default("In attesa")
+  scheduledAt DateTime?
+  notes       String?
+  delegaFirmaStatus    String    @default("non_inviata")
+  delegaFirmaRecipient String?
+  certificatoSentAt    DateTime?
+  certificatoSentVia   String?
+  spidVerifiedAt       DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([clientId])
+  @@index([status])
+}
+
+model CieBooking {
+  id          String   @id @default(cuid())
+  clientId    String
+  client      Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  slotAt      DateTime
+  status      String   @default("Prenotato")
+  notes       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([clientId])
+  @@index([slotAt])
+}
+
+// ─── Visure ──────────────────────────────────────────────────────────────────
+
+model VisureCase {
+  id          String   @id @default(cuid())
+  clientId    String
+  client      Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  caseType    String
+  registry    String?
+  status      String   @default("Richiesta")
+  resultUrl   String?
+  notes       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([clientId])
+  @@index([status])
+}
+
+// ─── Logistica / BRT ─────────────────────────────────────────────────────────
+
+model Shipment {
+  id            String         @id @default(cuid())
+  clientId      String?
+  client        Client?        @relation(fields: [clientId], references: [id], onDelete: SetNull)
+  trackingCode  String         @unique
+  carrier       String         @default("BRT")
+  status        ShipmentStatus @default(REGISTRATO)
+  recipientName String
+  recipientAddress String?
+  weightKg      Decimal?       @db.Decimal(8, 2)
+  notes         String?
+  shippedAt     DateTime?
+  deliveredAt   DateTime?
+  labelUrl      String?
+  brtParcelId   String?
+  metadata      Json?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  customsDocs   BrtCustomsDocument[]
+  logs          BrtLog[]
+
+  @@index([status])
+  @@index([clientId])
+}
+
+model PickupPackage {
+  id          String       @id @default(cuid())
+  clientId    String?
+  client      Client?      @relation(fields: [clientId], references: [id], onDelete: SetNull)
+  senderName  String
+  description String?
+  status      PickupStatus @default(SEGNALATO)
+  receivedAt  DateTime?
+  pickedUpAt  DateTime?
+  notes       String?
+  locationId  String?
+  location    PickupLocation? @relation(fields: [locationId], references: [id], onDelete: SetNull)
+  notifyEmail String?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  history     PickupPackageHistory[]
+
+  @@index([status])
+}
+
+// ─── Email Marketing ───────────────────────────────────────────────────────────
+
+model EmailSubscriber {
+  id        String           @id @default(cuid())
+  email     String           @unique
+  firstName String?
+  lastName  String?
+  tags      String[]
+  status    SubscriberStatus @default(ACTIVE)
+  source    String           @default("manual")
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+
+  @@index([status])
+}
+
+model EmailCampaign {
+  id             String              @id @default(cuid())
+  name           String
+  subject        String
+  htmlBody       String
+  status         CampaignStatus      @default(DRAFT)
+  scheduledAt    DateTime?
+  sentAt         DateTime?
+  recipientCount Int                 @default(0)
+  recipients     CampaignRecipient[]
+  createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @updatedAt
+
+  @@index([status])
+}
+
+// ─── Fedeltà / Curriculum / ACI / Telegrammi ─────────────────────────────────
+
+model LoyaltyPoint {
+  id            String   @id @default(cuid())
+  clientId      String
+  client        Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  points        Int      @default(0)
+  reason        String?
+  movementType  String   @default("accredito")
+  description   String?
+  balanceAfter  Int?
+  reward        String?
+  operatorId    String?
+  operatorName  String?
+  notes         String?
+  movedAt       DateTime @default(now())
+  createdAt     DateTime @default(now())
+
+  @@index([clientId])
+  @@index([movedAt])
+}
+
+model LoyaltyReward {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  pointsCost  Int
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([isActive])
+}
+
+model CurriculumRecord {
+  id          String   @id @default(cuid())
+  clientId    String
+  client      Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  title       String
+  status      String   @default("Bozza")
+  fileUrl     String?
+  notes       String?
+  summary     String?  @db.Text
+  keySkills   String?  @db.Text
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  experiences CurriculumExperience[]
+  education   CurriculumEducation[]
+  skills      CurriculumSkill[]
+  languages   CurriculumLanguage[]
+
+  @@index([clientId])
+}
+
+model AciPractice {
+  id          String   @id @default(cuid())
+  clientId    String
+  client      Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  practiceType String
+  plate       String?
+  status      String   @default("In lavorazione")
+  notes       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([clientId])
+}
+
+model TelegramRequest {
+  id          String   @id @default(cuid())
+  clientId    String?
+  senderName  String
+  recipient   String
+  body        String
+  status      String   @default("In coda")
+  sentAt      DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([status])
+}
+
+// ─── Documenti & Pagamenti ───────────────────────────────────────────────────
+
+model Document {
+  id         String   @id @default(cuid())
+  clientId   String?
+  client     Client?  @relation(fields: [clientId], references: [id], onDelete: SetNull)
+  entityType String
+  entityId   String?
+  fileName   String
+  fileUrl    String
+  mimeType   String?
+  uploadedBy String?
+  createdAt  DateTime @default(now())
+
+  @@index([clientId])
+  @@index([entityType, entityId])
+}
+
+model Payment {
+  id              String        @id @default(cuid())
+  clientId        String?
+  client          Client?       @relation(fields: [clientId], references: [id], onDelete: SetNull)
+  amount          Decimal       @db.Decimal(10, 2)
+  currency        String        @default("EUR")
+  status          PaymentStatus @default(PENDING)
+  method          String        @default("stripe")
+  stripeSessionId String?       @unique
+  stripePaymentId String?
+  description     String?
+  metadata        Json?
+  paidAt          DateTime?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  @@index([clientId])
+  @@index([status])
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+  REFUNDED
+  CANCELLED
+}
+
+model MorosityLog {
+  id        String        @id @default(cuid())
+  clientId  String
+  client    Client        @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  userId    String?
+  score     MorosityScore
+  source    String?
+  note      String?
+  createdAt DateTime      @default(now())
+
+  @@index([clientId])
+}
+
+// ─── Listino ─────────────────────────────────────────────────────────────────
+
+model PriceListItem {
+  id              String   @id @default(cuid())
+  code            String   @unique
+  name            String
+  category        String?
+  resellerCost    Decimal  @default(0) @db.Decimal(10, 2)
+  clientPrice     Decimal  @default(0) @db.Decimal(10, 2)
+  margin          Decimal  @default(0) @db.Decimal(10, 2)
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([category])
+}
+
+// ─── Email marketing esteso ──────────────────────────────────────────────────
+
+model EmailTemplate {
+  id        String   @id @default(cuid())
+  name      String
+  subject   String
+  preheader String?
+  htmlBody  String
+  createdBy String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model EmailList {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  description String?
+  createdAt   DateTime @default(now())
+}
+
+model CampaignRecipient {
+  id           String           @id @default(cuid())
+  campaignId   String
+  campaign     EmailCampaign    @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  subscriberId String?
+  email        String
+  status       SubscriberStatus @default(ACTIVE)
+  sentAt       DateTime?
+  openedAt     DateTime?
+  clickedAt    DateTime?
+
+  @@index([campaignId])
+}
+
+// ─── Collaboratori & Contratti Opportunity ───────────────────────────────────
+
+model CollaboratorCustomer {
+  id             String   @id @default(cuid())
+  collaboratorId String
+  collaborator   User     @relation("CollaboratorUser", fields: [collaboratorId], references: [id], onDelete: Cascade)
+  clientId       String
+  client         Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  lastSeenAt     DateTime @default(now())
+  createdAt      DateTime @default(now())
+
+  @@unique([collaboratorId, clientId])
+}
+
+model OpportunityStatusDef {
+  code          String        @id
+  label         String
+  color         String        @default("#64748b")
+  isCore        Boolean       @default(true)
+  ordering      Int           @default(0)
+  opportunities Opportunity[]
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+}
+
+model OpportunityProvider {
+  id                String              @id @default(cuid())
+  category          OpportunityCategory
+  name              String
+  slug              String
+  active            Boolean             @default(true)
+  ordering          Int                 @default(0)
+  defaultCommission Decimal?            @db.Decimal(10, 2)
+  metadata          Json?
+  offers            OpportunityOffer[]
+  opportunities     Opportunity[]
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+
+  @@unique([category, slug])
+  @@index([category])
+}
+
+model OpportunityOffer {
+  id            String              @id @default(cuid())
+  providerId    String
+  provider      OpportunityProvider @relation(fields: [providerId], references: [id], onDelete: Cascade)
+  name          String
+  slug          String
+  commission    Decimal?            @db.Decimal(10, 2)
+  active        Boolean             @default(true)
+  ordering      Int                 @default(0)
+  metadata      Json?
+  opportunities Opportunity[]
+  createdAt     DateTime            @default(now())
+  updatedAt     DateTime            @updatedAt
+
+  @@unique([providerId, slug])
+  @@index([providerId])
+}
+
+model Opportunity {
+  id              String                   @id @default(cuid())
+  code            String                   @unique
+  category        OpportunityCategory
+  statusCode      String                   @default("in_verifica")
+  status          OpportunityStatusDef     @relation(fields: [statusCode], references: [code])
+  providerId      String
+  provider        OpportunityProvider      @relation(fields: [providerId], references: [id])
+  offerId         String?
+  offer           OpportunityOffer?        @relation(fields: [offerId], references: [id], onDelete: SetNull)
+  providerLabel   String
+  offerLabel      String?
+  collaboratorId  String
+  collaborator    User                     @relation("OpportunityCollaborator", fields: [collaboratorId], references: [id], onDelete: Cascade)
+  managedById     String?
+  managedBy       User?                    @relation("OpportunityManager", fields: [managedById], references: [id], onDelete: SetNull)
+  commissionAmount Decimal?                @db.Decimal(10, 2)
+  clientId        String?
+  client          Client?                  @relation(fields: [clientId], references: [id], onDelete: SetNull)
+
+  customerFirstName   String
+  customerLastName    String
+  customerTaxCode     String
+  customerBirthDate   DateTime?
+  customerBirthPlace  String?
+  customerPhone       String
+  customerEmail       String
+  customerAddress     String?
+  customerCity        String?
+  customerPostalCode  String?
+  customerProvince    String?
+
+  documentType        String?
+  documentNumber      String?
+  documentIssuedBy    String?
+  documentIssuedAt      DateTime?
+  documentExpiresAt   DateTime?
+
+  telefoniaCurrentOperator String?
+  telefoniaLineNumber      String?
+  lucePod                  String?
+  gasPdr                   String?
+
+  paymentMethod           OpportunityPaymentMethod @default(IBAN)
+  paymentIban             String?
+  paymentHolderIsCustomer Boolean                  @default(true)
+  paymentHolderFirstName  String?
+  paymentHolderLastName   String?
+  paymentHolderTaxCode    String?
+
+  additionalNotes  String?
+  adminNotes       String?
+  contractCode     String?
+  clientCode       String?
+  lastStatusChange DateTime?
+  metadata         Json?
+
+  files     OpportunityFile[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([collaboratorId])
+  @@index([statusCode])
+  @@index([category])
+  @@index([customerEmail])
+  @@index([customerTaxCode])
+}
+
+model OpportunityFile {
+  id            String      @id @default(cuid())
+  opportunityId String
+  opportunity   Opportunity @relation(fields: [opportunityId], references: [id], onDelete: Cascade)
+  originalName  String
+  storedName    String
+  filePath      String
+  mimeType      String
+  fileSize      Int         @default(0)
+  uploadedById  String?
+  createdAt     DateTime    @default(now())
+
+  @@index([opportunityId])
+}
+
+model OpportunityDraft {
+  id             String   @id @default(cuid())
+  collaboratorId String   @unique
+  payload        Json
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+enum OpportunityCategory {
+  TELEFONIA
+  LUCE
+  GAS
+}
+
+enum OpportunityPaymentMethod {
+  IBAN
+  BOLLETTINO
+}
+
+// ─── PEC, Express, Web ───────────────────────────────────────────────────────
+
+model PecMailbox {
+  id        String   @id @default(cuid())
+  clientId  String
+  client    Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  address   String
+  provider  String?
+  status    String   @default("Attiva")
+  expiresAt DateTime?
+  notes     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([clientId])
+}
+
+model PostaMessage {
+  id                       String   @id @default(cuid())
+  channel                  String   @default("email")
+  recipientEmail           String
+  subject                  String
+  body                     String   @db.Text
+  status                   String   @default("pending")
+  errorMessage             String?
+  messageIdHeader          String?
+  pecReceiptInvioAt        DateTime?
+  pecReceiptAccettazioneAt DateTime?
+  pecReceiptConsegnaAt     DateTime?
+  receiptPdfUrl            String?
+  clientId                 String?
+  client                   Client?  @relation(fields: [clientId], references: [id], onDelete: SetNull)
+  createdById              String?
+  createdAt                DateTime @default(now())
+  updatedAt                DateTime @updatedAt
+  attachments              PostaMessageAttachment[]
+
+  @@index([status])
+  @@index([createdAt])
+  @@index([clientId])
+}
+
+model PostaMessageAttachment {
+  id        String       @id @default(cuid())
+  messageId String
+  message   PostaMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  fileName  String
+  fileUrl   String
+  fileSize  Int          @default(0)
+  mimeType  String
+  createdAt DateTime     @default(now())
+
+  @@index([messageId])
+}
+
+model PecInboxMessage {
+  id        String    @id @default(cuid())
+  uid       String?
+  mailbox   String    @default("INBOX")
+  sender    String?
+  subject   String?
+  receivedAt DateTime?
+  seen      Boolean   @default(false)
+  snippet   String?
+  body      String?   @db.Text
+  createdAt DateTime  @default(now())
+
+  @@unique([uid, mailbox])
+  @@index([receivedAt])
+  @@index([seen])
+}
+
+model BrtCustomsDocument {
+  id               String   @id @default(cuid())
+  shipmentId       String
+  shipment         Shipment @relation(fields: [shipmentId], references: [id], onDelete: Cascade)
+  status           String   @default("pending")
+  goodsDescription String
+  hsCode           String
+  incoterm         String   @default("DAP")
+  goodsValue       Decimal  @default(0) @db.Decimal(15, 2)
+  goodsCurrency    String   @default("EUR")
+  invoicePath      String?
+  declarationPath  String?
+  lastError        String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@index([shipmentId])
+}
+
+model BrtLog {
+  id         String   @id @default(cuid())
+  level      String
+  message    String
+  context    Json?
+  shipmentId String?
+  shipment   Shipment? @relation(fields: [shipmentId], references: [id], onDelete: SetNull)
+  createdBy  String?
+  createdAt  DateTime @default(now())
+
+  @@index([shipmentId])
+  @@index([createdAt])
+}
+
+model BrtSavedRecipient {
+  id        String   @id @default(cuid())
+  name      String
+  address   String?
+  zip       String?
+  city      String?
+  province  String?
+  country   String   @default("IT")
+  email     String?
+  phone     String?
+  createdAt DateTime @default(now())
+
+  @@index([name])
+}
+
+model PickupLocation {
+  id       String          @id @default(cuid())
+  name     String
+  address  String?
+  isActive Boolean         @default(true)
+  packages PickupPackage[]
+  createdAt DateTime       @default(now())
+}
+
+model PickupPackageHistory {
+  id        String        @id @default(cuid())
+  packageId String
+  package   PickupPackage @relation(fields: [packageId], references: [id], onDelete: Cascade)
+  status    String
+  note      String?
+  createdBy String?
+  createdAt DateTime      @default(now())
+
+  @@index([packageId])
+}
+
+model PickupNotification {
+  id             String   @id @default(cuid())
+  packageId      String?
+  recipientEmail String?
+  subject        String
+  body           String
+  status         String   @default("pending")
+  sentAt         DateTime?
+  createdAt      DateTime @default(now())
+
+  @@index([status])
+}
+
+model EnergyEmailLog {
+  id         String         @id @default(cuid())
+  contractId String
+  contract   EnergyContract @relation(fields: [contractId], references: [id], onDelete: Cascade)
+  subject    String
+  recipient  String
+  status     String         @default("sent")
+  sentAt     DateTime       @default(now())
+
+  @@index([contractId])
+}
+
+model CurriculumExperience {
+  id           String           @id @default(cuid())
+  curriculumId String
+  curriculum   CurriculumRecord @relation(fields: [curriculumId], references: [id], onDelete: Cascade)
+  roleTitle    String
+  employer     String
+  city         String?
+  startDate    DateTime
+  endDate      DateTime?
+  isCurrent    Boolean          @default(false)
+  description  String?
+  ordering     Int              @default(0)
+
+  @@index([curriculumId])
+}
+
+model CurriculumEducation {
+  id           String           @id @default(cuid())
+  curriculumId String
+  curriculum   CurriculumRecord @relation(fields: [curriculumId], references: [id], onDelete: Cascade)
+  title        String
+  institution  String
+  city         String?
+  startDate    DateTime
+  endDate      DateTime?
+  description  String?
+  ordering     Int              @default(0)
+
+  @@index([curriculumId])
+}
+
+model CurriculumSkill {
+  id           String           @id @default(cuid())
+  curriculumId String
+  curriculum   CurriculumRecord @relation(fields: [curriculumId], references: [id], onDelete: Cascade)
+  name         String
+  level        String?
+
+  @@index([curriculumId])
+}
+
+model CurriculumLanguage {
+  id           String           @id @default(cuid())
+  curriculumId String
+  curriculum   CurriculumRecord @relation(fields: [curriculumId], references: [id], onDelete: Cascade)
+  language     String
+  level        String
+
+  @@index([curriculumId])
+}
+
+model ExpressOperator {
+  id               String   @id @default(cuid())
+  mysqlId          Int?     @unique
+  name             String   @unique
+  reorderThreshold Int      @default(10)
+  active           Boolean  @default(true)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  offers     ExpressOffer[]
+  iccidStock ExpressIccidStock[]
+  saleLines  ExpressSaleLine[]
+  stockAlerts ExpressStockAlert[]
+}
+
+model ExpressOffer {
+  id          String           @id @default(cuid())
+  mysqlId     Int?             @unique
+  operatorId  String?
+  operator    ExpressOperator? @relation(fields: [operatorId], references: [id], onDelete: SetNull)
+  title       String
+  description String?
+  price       Decimal          @default(0) @db.Decimal(10, 2)
+  cost        Decimal          @default(0) @db.Decimal(10, 2)
+  status      String           @default("Active")
+  validFrom   DateTime?
+  validTo     DateTime?
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  saleLines ExpressSaleLine[]
+
+  @@index([operatorId])
+  @@index([status])
+}
+
+model ExpressProduct {
+  id               String   @id @default(cuid())
+  mysqlId          Int?     @unique
+  name             String
+  sku              String?  @unique
+  imei             String?  @unique
+  category         String?
+  price            Decimal  @default(0) @db.Decimal(10, 2)
+  cost             Decimal  @default(0) @db.Decimal(10, 2)
+  vatRate          Decimal  @default(22) @db.Decimal(5, 2)
+  stockQty         Int      @default(0)
+  reorderThreshold Int      @default(0)
+  notes            String?
+  active           Boolean  @default(true)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  saleLines ExpressSaleLine[]
+  requests  ExpressRequest[]
+  stockAlerts ExpressStockAlert[]
+}
+
+model ExpressIccidStock {
+  id          String          @id @default(cuid())
+  mysqlId     Int?            @unique
+  operatorId  String
+  operator    ExpressOperator @relation(fields: [operatorId], references: [id], onDelete: Cascade)
+  saleId      String?
+  sale        ExpressSale?    @relation(fields: [saleId], references: [id], onDelete: SetNull)
+  iccid       String          @unique
+  assignedNumber String?
+  status      String          @default("InStock")
+  notes       String?
+  createdById String?
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  saleLines ExpressSaleLine[]
+
+  @@index([operatorId, status])
+}
+
+model ExpressSale {
+  id             String        @id @default(cuid())
+  mysqlId        Int?          @unique
+  receiptNumber  Int?
+  receiptToken   String?       @unique
+  clientId       String?
+  client         Client?       @relation(fields: [clientId], references: [id], onDelete: SetNull)
+  userId         String?
+  user           User?         @relation(fields: [userId], references: [id], onDelete: SetNull)
+  cashMovementId String?       @unique
+  cashMovement   CashMovement? @relation(fields: [cashMovementId], references: [id], onDelete: SetNull)
+  total          Decimal       @default(0) @db.Decimal(10, 2)
+  vatRate        Decimal       @default(22) @db.Decimal(5, 2)
+  discount       Decimal       @default(0) @db.Decimal(10, 2)
+  discountCampaignId String?
+  discountCampaign   ExpressDiscountCampaign? @relation(fields: [discountCampaignId], references: [id], onDelete: SetNull)
+  paymentMethod  String        @default("Contanti")
+  status         String        @default("Completata")
+  soldAt         DateTime      @default(now())
+  notes          String?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  lines      ExpressSaleLine[]
+  iccidStock ExpressIccidStock[]
+
+  @@index([clientId])
+  @@index([soldAt])
+  @@index([status])
+}
+
+model ExpressSaleLine {
+  id           String           @id @default(cuid())
+  mysqlId      Int?             @unique
+  saleId       String
+  sale         ExpressSale      @relation(fields: [saleId], references: [id], onDelete: Cascade)
+  operatorId   String?
+  operator     ExpressOperator? @relation(fields: [operatorId], references: [id], onDelete: SetNull)
+  iccidStockId String?
+  iccidStock   ExpressIccidStock? @relation(fields: [iccidStockId], references: [id], onDelete: SetNull)
+  productId    String?
+  product      ExpressProduct?  @relation(fields: [productId], references: [id], onDelete: SetNull)
+  offerId      String?
+  offer        ExpressOffer?    @relation(fields: [offerId], references: [id], onDelete: SetNull)
+  lineType     String           @default("sim")
+  description  String
+  quantity     Int              @default(1)
+  returnedQty  Int              @default(0)
+  unitPrice    Decimal          @default(0) @db.Decimal(10, 2)
+  vatRate      Decimal          @default(22) @db.Decimal(5, 2)
+  lineTotal    Decimal          @default(0) @db.Decimal(10, 2)
+  lineDiscount Decimal          @default(0) @db.Decimal(10, 2)
+  vatCode      String?
+  assignedNumber String?
+  createdAt    DateTime         @default(now())
+
+  @@index([saleId])
+}
+
+model ExpressRequest {
+  id            String          @id @default(cuid())
+  mysqlId       Int?            @unique
+  clientId      String
+  client        Client          @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  productId     String?
+  product       ExpressProduct? @relation(fields: [productId], references: [id], onDelete: SetNull)
+  title         String
+  requestType   String          @default("Purchase")
+  status        String          @default("Pending")
+  depositAmount Decimal?        @db.Decimal(10, 2)
+  installments  Int?
+  paymentMethod String?
+  desiredDate   DateTime?
+  clientNotes   String?
+  internalNotes String?
+  handledById   String?
+  handledBy     User?           @relation("ExpressRequestHandler", fields: [handledById], references: [id], onDelete: SetNull)
+  handledAt     DateTime?
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+
+  @@index([clientId, status])
+}
+
+model ExpressSettings {
+  id        String   @id @default("default")
+  data      Json
+  updatedAt DateTime @updatedAt
+}
+
+model ExpressDiscountCampaign {
+  id          String   @id @default(cuid())
+  mysqlId     Int?     @unique
+  name        String
+  description String?
+  type        String   @default("Fixed")
+  value       Decimal  @default(0) @db.Decimal(10, 2)
+  active      Boolean  @default(true)
+  startsAt    DateTime?
+  endsAt      DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  sales       ExpressSale[]
+}
+
+model ExpressStockAlert {
+  id         String           @id @default(cuid())
+  operatorId String?
+  operator   ExpressOperator? @relation(fields: [operatorId], references: [id], onDelete: Cascade)
+  productId  String?
+  product    ExpressProduct?  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  message    String
+  status     String           @default("Open")
+  createdAt  DateTime         @default(now())
+  resolvedAt DateTime?
+
+  @@index([status])
+}
+
+model ExpressPortalClient {
+  id            String   @id @default(cuid())
+  mysqlId       Int?     @unique
+  clientId      String   @unique
+  client        Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  pickupMysqlId Int?
+  status        String   @default("active")
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model ExpressPdaImport {
+  id          String   @id @default(cuid())
+  reference   String?
+  payload     Json
+  status      String   @default("Pending")
+  saleId      String?
+  createdById String?
+  createdAt   DateTime @default(now())
+}
+
+model WebProject {
+  id          String   @id @default(cuid())
+  clientId    String
+  client      Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  name        String
+  domain      String?
+  status      String   @default("In sviluppo")
+  launchDate  DateTime?
+  notes       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([clientId])
+}
+
+model WebQuote {
+  id               String         @id @default(cuid())
+  number           String         @unique
+  title            String
+  clientId         String
+  client           Client         @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  authorId         String?
+  author           User?          @relation("WebQuoteAuthor", fields: [authorId], references: [id], onDelete: SetNull)
+  status           WebQuoteStatus @default(DRAFT)
+  projectType      String         @default("website")
+  validUntil       DateTime?
+  introduction     String?
+  scopeNotes       String?
+  terms            String?
+  paymentPlan      String?
+  subtotal         Float          @default(0)
+  discountPercent  Float          @default(0)
+  discountAmount   Float          @default(0)
+  taxPercent       Float          @default(22)
+  taxAmount        Float          @default(0)
+  total            Float          @default(0)
+  currency         String         @default("EUR")
+  templateStyle    String         @default("premium")
+  accentColor      String         @default("#6366f1")
+  showBranding     Boolean        @default(true)
+  includeTimeline  Boolean        @default(true)
+  includePackages  Boolean        @default(false)
+  packages         Json           @default("[]")
+  milestones       Json           @default("[]")
+  pdfGeneratedAt   DateTime?
+  sentAt           DateTime?
+  acceptedAt       DateTime?
+  items            WebQuoteItem[]
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+
+  @@index([clientId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model WebQuoteItem {
+  id          String   @id @default(cuid())
+  quoteId     String
+  quote       WebQuote @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+  sortOrder   Int      @default(0)
+  title       String
+  description String?
+  category    String?
+  quantity    Float    @default(1)
+  unitPrice   Float    @default(0)
+  total       Float    @default(0)
+  isOptional  Boolean  @default(false)
+  isPremium   Boolean  @default(false)
+
+  @@index([quoteId])
+}
+
+// ─── Notifiche & Reminder ────────────────────────────────────────────────────
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title     String
+  body      String
+  type      String   @default("info")
+  read      Boolean  @default(false)
+  link      String?
+  createdAt DateTime @default(now())
+
+  @@index([userId, read])
+}
+
+model Reminder {
+  id           String   @id @default(cuid())
+  entityType   String
+  entityId     String
+  scheduledAt  DateTime
+  sent         Boolean  @default(false)
+  channel      String   @default("email")
+  message      String?
+  createdAt    DateTime @default(now())
+
+  @@index([scheduledAt, sent])
+}

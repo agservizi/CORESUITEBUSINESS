@@ -1,0 +1,15 @@
+node_modules
+.next
+.git
+.gitignore
+.env
+.env.*
+!.env.example
+*.md
+.cursor
+.vscode
+coverage
+terminals
+agent-transcripts
+**/*.log
+**/.DS_Store

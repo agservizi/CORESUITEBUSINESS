@@ -1,0 +1,12 @@
+# Esempio ingress Cloudflare Tunnel (se NON usi TUNNEL_TOKEN).
+# Monta in /etc/cloudflared/config.yml sul server e collega al container cloudflared esistente.
+#
+# tunnel: <TUNNEL_ID>
+# credentials-file: /etc/cloudflared/<TUNNEL_ID>.json
+#
+# ingress:
+#   - hostname: business.coresuite.it
+#     service: http://coresuite-app:3000
+#   - hostname: coresuite.it
+#     service: http://coresuite-app:3000
+#   - service: http_status:404

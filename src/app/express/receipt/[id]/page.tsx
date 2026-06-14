@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { Box, Typography, Divider, Paper, Chip } from "@mui/material";
 import { getPublicReceipt } from "@/lib/platform/express-wow";
+import { getAgServiziCompany } from "@/config/ag-servizi-company";
 
 function money(n: number) {
   return new Intl.NumberFormat("it-IT", { style: "currency", currency: "EUR" }).format(n);
@@ -20,6 +21,8 @@ export default async function ExpressPublicReceiptPage({
   const receipt = await getPublicReceipt(id, t);
   if (!receipt) notFound();
 
+  const company = getAgServiziCompany();
+
   return (
     <Box
       sx={{
@@ -29,6 +32,7 @@ export default async function ExpressPublicReceiptPage({
         px: 2,
         display: "flex",
         justifyContent: "center",
+        alignItems: "flex-start",
       }}
     >
       <Paper
@@ -42,8 +46,11 @@ export default async function ExpressPublicReceiptPage({
           borderColor: "divider",
         }}
       >
-        <Typography variant="overline" color="text.secondary" sx={{ letterSpacing: 2 }}>
-          Express Telefonia
+        <Typography variant="overline" color="text.secondary" sx={{ letterSpacing: 1.5, lineHeight: 1.4 }}>
+          {company.legalName}
+        </Typography>
+        <Typography variant="caption" color="text.secondary" sx={{ display: "block", mb: 1.5 }}>
+          {company.fullAddress}
         </Typography>
         <Typography sx={{ fontWeight: 800, fontSize: "1.35rem", mb: 0.5 }}>
           Ricevuta #{receipt.receiptNumber ?? receipt.id.slice(-6)}

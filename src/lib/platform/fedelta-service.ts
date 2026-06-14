@@ -110,16 +110,3 @@ export async function redeemLoyaltyReward(
     user
   );
 }
-
-export async function seedDefaultRewards() {
-  const count = await prisma.loyaltyReward.count();
-  if (count > 0) return { seeded: 0 };
-  await prisma.loyaltyReward.createMany({
-    data: [
-      { name: "Caffè omaggio", description: "Un caffè in sede", pointsCost: 50 },
-      { name: "Sconto 10% servizio", description: "Sconto 10% sul prossimo servizio", pointsCost: 200 },
-      { name: "Pratica prioritaria", description: "Gestione prioritaria entro 24h", pointsCost: 500 },
-    ],
-  });
-  return { seeded: 3 };
-}

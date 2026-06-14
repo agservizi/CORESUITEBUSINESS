@@ -1,4 +1,16 @@
 import PDFDocument from "pdfkit";
+import { getAgServiziPdfLetterhead } from "@/config/ag-servizi-company";
+
+function writePdfLetterhead(doc: InstanceType<typeof PDFDocument>) {
+  const head = getAgServiziPdfLetterhead();
+  doc.fontSize(20).text(head.title, { align: "center" });
+  doc.fontSize(9).text(head.subtitle, { align: "center" });
+  doc.fontSize(8).text(head.address, { align: "center" });
+  const contact = [head.phone && `Tel. ${head.phone}`, head.email, head.vatNumber && `P.IVA ${head.vatNumber}`]
+    .filter(Boolean)
+    .join(" · ");
+  if (contact) doc.text(contact, { align: "center" });
+}
 
 export async function generateReceiptPdf(data: {
   title: string;
@@ -14,7 +26,7 @@ export async function generateReceiptPdf(data: {
     doc.on("end", () => resolve(Buffer.concat(chunks)));
     doc.on("error", reject);
 
-    doc.fontSize(20).text("AG Servizi — Coresuite", { align: "center" });
+    writePdfLetterhead(doc);
     doc.moveDown();
     doc.fontSize(14).text(data.title, { align: "center" });
     doc.fontSize(10).text(`Codice: ${data.code}`, { align: "center" });
@@ -131,6 +143,7 @@ export async function generateCashJournalPdf(journal: {
     doc.on("error", reject);
 
     doc.fontSize(18).text("GIORNALE DI CASSA", { align: "center" });
+    doc.fontSize(9).text(getAgServiziPdfLetterhead().address, { align: "center" });
     doc.fontSize(11).text(`Giornata ${journal.businessDate}`, { align: "center" });
     doc.moveDown();
     doc.fontSize(10);

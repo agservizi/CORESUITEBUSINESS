@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { Box, IconButton, InputBase } from "@mui/material";
 import MenuIcon from "@mui/icons-material/Menu";
 import SearchIcon from "@mui/icons-material/Search";
-import { topbarShellSx, mergeShellSx, AppShellTopBarActions, type AppShellTopBarUser } from "@/components/layout/app-shell";
+import { topbarShellSx, mergeShellSx, AppShellTopBarActions, topbarIconButtonSx, type AppShellTopBarUser } from "@/components/layout/app-shell";
 import HubNotificationsMenu from "@/components/hub/HubNotificationsMenu";
 import BusinessCommandPalette from "@/components/business/BusinessCommandPalette";
 import AiContextTopBarButton from "@/components/ai/AiContextTopBarButton";
@@ -32,7 +32,11 @@ export default function BusinessTopBar({ user, onMenuClick }: Props) {
   return (
     <>
       <Box sx={mergeShellSx(topbarShellSx, { px: 2, gap: 1 })}>
-        <IconButton size="small" onClick={onMenuClick} sx={{ color: "text.secondary", display: { md: "none" } }}>
+        <IconButton
+          size="small"
+          onClick={onMenuClick}
+          sx={{ ...topbarIconButtonSx, display: { md: "none" } }}
+        >
           <MenuIcon fontSize="small" />
         </IconButton>
 

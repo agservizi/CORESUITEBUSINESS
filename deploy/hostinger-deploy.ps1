@@ -48,7 +48,8 @@ if ($SkipEnvBundle) {
 $pkgPath = Join-Path $staging "package.json"
 $pkgText = Get-Content $pkgPath -Raw
 $pkgText = $pkgText -replace '\s*"postinstall"\s*:\s*"[^"]*"\s*,?\r?\n', "`n"
-$pkgText = $pkgText -replace '"build"\s*:\s*"next build"', '"build": "prisma generate && next build"'
+$hostingerBuild = "prisma generate && prisma migrate deploy && npm run db:seed && next build"
+$pkgText = $pkgText -replace '"build"\s*:\s*"[^"]*"', ('"build": "' + $hostingerBuild + '"')
 $pkgText = $pkgText -replace '"start"\s*:\s*"next start[^"]*"', '"start": "next start --hostname 0.0.0.0 --port 3000"'
 $utf8NoBom = New-Object System.Text.UTF8Encoding $false
 [System.IO.File]::WriteAllText($pkgPath, $pkgText, $utf8NoBom)
@@ -78,6 +79,7 @@ if ($PackageOnly) {
   Write-Host "    2. Add Website -> Node.js Apps -> Upload your website files"
   Write-Host "    3. Carica: $uploadZip"
   Write-Host "    4. Framework: Next.js | Node 22 | Build: npm run build | Start: npm run start"
+  Write-Host "       (build = migrate deploy + seed purge demo + next build)"
   Write-Host "    5. Deploy, poi node deploy/setup-hostinger-infra.mjs per DNS/sottodomini"
   Remove-Item $staging -Recurse -Force -ErrorAction SilentlyContinue
   Remove-Item $archive -Force -ErrorAction SilentlyContinue
@@ -132,6 +134,8 @@ Remove-Item $archive -Force -ErrorAction SilentlyContinue
 
 Write-Host ""
 Write-Host "==> Deploy completato: https://$Domain"
+Write-Host "==> Il build include: prisma migrate deploy + db:seed (purge dati demo legacy)"
+Write-Host "==> Seed manuale (se serve ripetere): .\deploy\run-production-seed.ps1"
 Write-Host "==> 503 senza runtime logs = sito NON creato come Node.js Web App."
 Write-Host "    Hostinger richiede: Add Website -> Node.js Apps (non solo build API su addon)."
 Write-Host "    Usa: .\deploy\hostinger-deploy.ps1 -PackageOnly  poi upload manuale dello zip."

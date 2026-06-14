@@ -1,4 +1,5 @@
 import type { WebQuoteItemInput } from "./web-quote-types";
+import { getAgServiziStudioBranding } from "@/config/ag-servizi-company";
 
 export function formatEuro(value: number, currency = "EUR") {
   return new Intl.NumberFormat("it-IT", {
@@ -39,13 +40,5 @@ export function clientDisplayName(client: {
 }
 
 export function getStudioBranding() {
-  return {
-    name: process.env.STUDIO_NAME || "AG Servizi — Web Agency",
-    tagline: process.env.STUDIO_TAGLINE || "Digital Experience Studio",
-    email: process.env.STUDIO_EMAIL || "info@agservizi.it",
-    phone: process.env.STUDIO_PHONE || "+39 000 000 0000",
-    website: process.env.STUDIO_WEBSITE || "www.coresuite.it",
-    address: process.env.STUDIO_ADDRESS || "Italia",
-    vat: process.env.STUDIO_VAT || "",
-  };
+  return getAgServiziStudioBranding();
 }

@@ -3,7 +3,7 @@
 import { Box, Typography, IconButton } from "@mui/material";
 import MenuIcon from "@mui/icons-material/Menu";
 import { getPlatformService } from "@/config/platform-services";
-import { topbarShellSx, mergeShellSx, AppShellTopBarActions, type AppShellTopBarUser } from "@/components/layout/app-shell";
+import { topbarShellSx, mergeShellSx, AppShellTopBarActions, topbarIconButtonSx, type AppShellTopBarUser } from "@/components/layout/app-shell";
 import AiContextTopBarButton from "@/components/ai/AiContextTopBarButton";
 
 interface PlatformTopBarProps {
@@ -22,7 +22,7 @@ export default function PlatformTopBar({
   return (
     <Box sx={mergeShellSx(topbarShellSx, { px: { xs: 2, md: 3 }, justifyContent: "space-between" })}>
       <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-        <IconButton size="small" onClick={onMenuClick} sx={{ display: { md: "none" } }}>
+        <IconButton size="small" onClick={onMenuClick} sx={{ ...topbarIconButtonSx, display: { md: "none" } }}>
           <MenuIcon />
         </IconButton>
         <Box>

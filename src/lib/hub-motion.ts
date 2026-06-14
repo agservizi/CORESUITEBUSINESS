@@ -147,3 +147,69 @@ export const hubAlertItem: Variants = {
     transition: { delay: i * 0.06, duration: 0.35, ease: hubEase },
   }),
 };
+
+/** Command palette overlay + panel */
+export const hubPaletteOverlay: Variants = {
+  hidden: { opacity: 0 },
+  show: { opacity: 1, transition: { duration: 0.2 } },
+  exit: { opacity: 0, transition: { duration: 0.15 } },
+};
+
+export const hubPalettePanel: Variants = {
+  hidden: { opacity: 0, scale: 0.96, y: -12, filter: "blur(8px)" },
+  show: {
+    opacity: 1,
+    scale: 1,
+    y: 0,
+    filter: "blur(0px)",
+    transition: { duration: 0.28, ease: hubEase },
+  },
+  exit: {
+    opacity: 0,
+    scale: 0.98,
+    y: -8,
+    filter: "blur(4px)",
+    transition: { duration: 0.18 },
+  },
+};
+
+export const hubPaletteItem: Variants = {
+  hidden: { opacity: 0, y: 6 },
+  show: (i: number) => ({
+    opacity: 1,
+    y: 0,
+    transition: { delay: i * 0.025, duration: 0.22, ease: hubEase },
+  }),
+};
+
+/** Hero subtitle lines */
+export const hubHeroLine: Variants = {
+  hidden: { opacity: 0, y: 12 },
+  show: (i: number) => ({
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.45, ease: hubEase, delay: 0.35 + i * 0.1 },
+  }),
+};
+
+/** Dropdown menu */
+export const hubMenuDropdown: Variants = {
+  hidden: { opacity: 0, y: -8, scale: 0.97 },
+  show: {
+    opacity: 1,
+    y: 0,
+    scale: 1,
+    transition: { duration: 0.22, ease: hubEase },
+  },
+  exit: { opacity: 0, y: -6, scale: 0.98, transition: { duration: 0.15 } },
+};
+
+/** Explorer section highlight ring */
+export const hubExplorerHighlight = {
+  boxShadow: [
+    "0 0 0 0 rgba(99,102,241,0)",
+    "0 0 0 4px rgba(99,102,241,0.35)",
+    "0 0 0 0 rgba(99,102,241,0)",
+  ],
+  transition: { duration: 1.8, ease: "easeInOut" },
+};

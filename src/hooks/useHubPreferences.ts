@@ -4,11 +4,22 @@ import { useCallback, useEffect, useState } from "react";
 import {
   getHubPreferences,
   togglePinnedService,
+  reorderPinnedServices,
+  setHubLayoutDensity,
+  completeHubTour,
+  markCommandPaletteUsed,
   type HubPreferences,
 } from "@/lib/hub-preferences";
+import type { HubLayoutDensity } from "@/lib/hub-layout";
 
 export function useHubPreferences(userId: string) {
-  const [prefs, setPrefs] = useState<HubPreferences>({ pinned: [], recent: [] });
+  const [prefs, setPrefs] = useState<HubPreferences>({
+    pinned: [],
+    recent: [],
+    layoutDensity: "comfortable",
+    tourCompleted: false,
+    commandPaletteUsed: false,
+  });
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
@@ -38,9 +49,49 @@ export function useHubPreferences(userId: string) {
     [userId]
   );
 
+  const reorderPinned = useCallback(
+    (ordered: string[]) => {
+      const next = reorderPinnedServices(userId, ordered);
+      setPrefs(next);
+      return next;
+    },
+    [userId]
+  );
+
+  const setDensity = useCallback(
+    (layoutDensity: HubLayoutDensity) => {
+      const next = setHubLayoutDensity(userId, layoutDensity);
+      setPrefs(next);
+      return next;
+    },
+    [userId]
+  );
+
+  const completeTour = useCallback(() => {
+    const next = completeHubTour(userId);
+    setPrefs(next);
+    return next;
+  }, [userId]);
+
+  const markPaletteUsed = useCallback(() => {
+    const next = markCommandPaletteUsed(userId);
+    setPrefs(next);
+    return next;
+  }, [userId]);
+
   const refresh = useCallback(() => {
     setPrefs(getHubPreferences(userId));
   }, [userId]);
 
-  return { prefs, ready, togglePin, refresh, isPinned: (slug: string) => prefs.pinned.includes(slug) };
+  return {
+    prefs,
+    ready,
+    togglePin,
+    reorderPinned,
+    setDensity,
+    completeTour,
+    markPaletteUsed,
+    refresh,
+    isPinned: (slug: string) => prefs.pinned.includes(slug),
+  };
 }

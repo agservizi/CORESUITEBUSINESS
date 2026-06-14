@@ -133,16 +133,16 @@ export default function HubActivityPanel() {
       </Box>
       <Box
         component={motion.div}
-        initial={{ opacity: 0, scaleY: 0.6 }}
-        whileInView={{ opacity: 1, scaleY: 1 }}
+        initial={{ opacity: 0 }}
+        whileInView={{ opacity: 1 }}
         viewport={{ once: true }}
         transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-        sx={{ height: 100, mt: 1, transformOrigin: "bottom" }}
+        sx={{ height: 100, mt: 1, minWidth: 0 }}
       >
         {loading ? (
           <Skeleton variant="rounded" height={100} />
         ) : (
-          <ResponsiveContainer width="100%" height="100%">
+          <ResponsiveContainer width="100%" height={100} minWidth={0}>
             <AreaChart data={revenueTrend}>
               <defs>
                 <linearGradient id="hubRevenue" x1="0" y1="0" x2="0" y2="1">

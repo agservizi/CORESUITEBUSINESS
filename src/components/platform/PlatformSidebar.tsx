@@ -16,6 +16,7 @@ import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import { useRouter } from "next/navigation";
+import { navigateResolved } from "@/lib/navigate-resolved";
 import { usePlatformNavigation } from "@/context/PlatformNavigationProvider";
 import { getPlatformService } from "@/config/platform-services";
 import { getPlatformNavIcon } from "./platform-nav-icons";
@@ -121,7 +122,7 @@ export default function PlatformSidebar({
       <Divider sx={{ borderColor: "divider" }} />
       <List dense sx={{ px: 1, py: 1 }}>
         <Tooltip title={!open ? "Torna al Hub" : ""} placement="right">
-          <ListItemButton onClick={() => router.push("/dashboard")} sx={{ borderRadius: 2 }}>
+          <ListItemButton onClick={() => navigateResolved(router, "/dashboard")} sx={{ borderRadius: 2 }}>
             <ListItemIcon sx={{ minWidth: 36 }}>
               <ArrowBackIcon fontSize="small" />
             </ListItemIcon>

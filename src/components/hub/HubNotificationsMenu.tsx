@@ -1,13 +1,14 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   Box,
   Typography,
   IconButton,
   Tooltip,
   Badge,
-  Menu,
+  Popover,
+  MenuList,
   MenuItem,
   ListItemIcon,
   ListItemText,
@@ -16,15 +17,20 @@ import {
   CircularProgress,
 } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
+import { motion, AnimatePresence } from "framer-motion";
 import NotificationsNoneIcon from "@mui/icons-material/NotificationsNone";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import WarningAmberIcon from "@mui/icons-material/WarningAmber";
 import CheckCircleOutlinedIcon from "@mui/icons-material/CheckCircleOutlined";
 import ErrorOutlinedIcon from "@mui/icons-material/ErrorOutlined";
 import DoneAllIcon from "@mui/icons-material/DoneAll";
+import PaymentsIcon from "@mui/icons-material/Payments";
+import ConfirmationNumberIcon from "@mui/icons-material/ConfirmationNumber";
 import { useRouter } from "next/navigation";
 import { apiFetch } from "@/lib/fetch-client";
 import { getShellTokens, shellMenuPaperSx } from "@/theme/shell-tokens";
+import { hubAlertItem, hubMenuDropdown } from "@/lib/hub-motion";
+import { topbarIconButtonSx } from "@/components/layout/app-shell";
 
 interface NotificationItem {
   id: string;
@@ -41,6 +47,11 @@ const TYPE_ICONS: Record<string, React.ElementType> = {
   warning: WarningAmberIcon,
   success: CheckCircleOutlinedIcon,
   error: ErrorOutlinedIcon,
+  express_sale: CheckCircleOutlinedIcon,
+  express_request: WarningAmberIcon,
+  finance: PaymentsIcon,
+  ticket: ConfirmationNumberIcon,
+  business: InfoOutlinedIcon,
 };
 
 const TYPE_COLORS: Record<string, string> = {
@@ -48,6 +59,11 @@ const TYPE_COLORS: Record<string, string> = {
   warning: "#f59e0b",
   success: "#10b981",
   error: "#ef4444",
+  express_sale: "#10b981",
+  express_request: "#f59e0b",
+  finance: "#0ea5e9",
+  ticket: "#6366f1",
+  business: "#8b5cf6",
 };
 
 function formatRelative(dateStr: string) {
@@ -69,15 +85,24 @@ export default function HubNotificationsMenu() {
   const [items, setItems] = useState<NotificationItem[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [loading, setLoading] = useState(false);
+  const [badgeBump, setBadgeBump] = useState(false);
+  const prevUnread = useRef(0);
 
   const fetchNotifications = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch("/api/notifications");
+      const res = await fetch("/api/notifications", { credentials: "include" });
       if (!res.ok) return;
       const data = await res.json();
+      const nextUnread = data.unreadCount ?? 0;
       setItems(data.notifications ?? []);
-      setUnreadCount(data.unreadCount ?? 0);
+      setUnreadCount((prev) => {
+        if (nextUnread > prev) {
+          setBadgeBump(true);
+          window.setTimeout(() => setBadgeBump(false), 600);
+        }
+        return nextUnread;
+      });
     } finally {
       setLoading(false);
     }
@@ -88,6 +113,10 @@ export default function HubNotificationsMenu() {
     const interval = setInterval(fetchNotifications, 60000);
     return () => clearInterval(interval);
   }, [fetchNotifications]);
+
+  useEffect(() => {
+    prevUnread.current = unreadCount;
+  }, [unreadCount]);
 
   async function markRead(id: string) {
     await apiFetch(`/api/notifications/${id}`, {
@@ -115,23 +144,49 @@ export default function HubNotificationsMenu() {
     if (n.link) router.push(n.link);
   }
 
+  const badgePulse = badgeBump;
+
   return (
     <>
       <Tooltip title="Notifiche">
-        <IconButton size="small" onClick={handleOpen} sx={{ color: "text.secondary" }}>
+        <IconButton
+          size="small"
+          onClick={handleOpen}
+          sx={topbarIconButtonSx}
+          aria-label="Notifiche"
+        >
           <Badge
             badgeContent={unreadCount}
             color="error"
             max={9}
             invisible={unreadCount === 0}
-            sx={{ "& .MuiBadge-badge": { fontSize: "0.65rem", minWidth: 16, height: 16 } }}
+            overlap="circular"
+            anchorOrigin={{ vertical: "top", horizontal: "right" }}
+            sx={{
+              display: "inline-flex",
+              overflow: "visible",
+              "& .MuiBadge-badge": {
+                fontSize: "0.65rem",
+                minWidth: 16,
+                height: 16,
+                top: 4,
+                right: 4,
+              },
+            }}
           >
-            <NotificationsNoneIcon fontSize="small" />
+            <Box
+              component={motion.span}
+              animate={badgePulse ? { scale: [1, 1.15, 1] } : { scale: 1 }}
+              transition={{ duration: 0.45 }}
+              sx={{ display: "inline-flex", alignItems: "center", justifyContent: "center" }}
+            >
+              <NotificationsNoneIcon fontSize="small" />
+            </Box>
           </Badge>
         </IconButton>
       </Tooltip>
 
-      <Menu
+      <Popover
         anchorEl={anchor}
         open={Boolean(anchor)}
         onClose={() => setAnchor(null)}
@@ -147,20 +202,21 @@ export default function HubNotificationsMenu() {
                 maxWidth: "95vw",
                 overflow: "hidden",
                 backdropFilter: "blur(20px)",
-                boxShadow: theme.palette.mode === "dark" ? "0 8px 32px rgba(0,0,0,0.4)" : "0 8px 32px rgba(15,23,42,0.12)",
+                boxShadow:
+                  theme.palette.mode === "dark"
+                    ? "0 8px 32px rgba(0,0,0,0.4)"
+                    : "0 8px 32px rgba(15,23,42,0.12)",
               },
             ],
           },
-          list: {
-            sx: {
-              width: "100%",
-              maxWidth: "100%",
-              overflowX: "hidden",
-              py: 0,
-            },
-          },
         }}
       >
+        <Box
+          component={motion.div}
+          variants={hubMenuDropdown}
+          initial="hidden"
+          animate="show"
+        >
         <Box sx={{ px: 2, py: 1.5, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
           <Typography sx={{ fontWeight: 700, fontSize: "0.9rem" }}>Notifiche</Typography>
           {unreadCount > 0 && (
@@ -185,74 +241,83 @@ export default function HubNotificationsMenu() {
             Nessuna notifica
           </Typography>
         ) : (
-          <Box sx={{ maxHeight: 360, overflowY: "auto", overflowX: "hidden" }}>
-            {items.map((n) => {
-              const Icon = TYPE_ICONS[n.type] || InfoOutlinedIcon;
-              const color = TYPE_COLORS[n.type] || TYPE_COLORS.info;
-              return (
-                <MenuItem
-                  key={n.id}
-                  onClick={() => handleSelect(n)}
-                  sx={{
-                    py: 1.5,
-                    alignItems: "flex-start",
-                    gap: 1,
-                    whiteSpace: "normal",
-                    width: "100%",
-                    maxWidth: "100%",
-                    boxSizing: "border-box",
-                    background: n.read ? "transparent" : `${color}08`,
-                    borderLeft: n.read ? "3px solid transparent" : `3px solid ${color}`,
-                  }}
-                >
-                  <ListItemIcon sx={{ minWidth: 32, mt: 0.25, flexShrink: 0 }}>
-                    <Icon sx={{ fontSize: 18, color }} />
-                  </ListItemIcon>
-                  <ListItemText
-                    sx={{ minWidth: 0, flex: 1, m: 0 }}
-                    primary={n.title}
-                    secondary={
-                      <>
-                        <Typography
-                          component="span"
-                          variant="caption"
-                          sx={{
-                            display: "block",
-                            lineHeight: 1.4,
-                            whiteSpace: "normal",
-                            wordBreak: "break-word",
-                            overflowWrap: "anywhere",
-                          }}
-                        >
-                          {n.body}
-                        </Typography>
-                        <Typography component="span" variant="caption" color="text.secondary">
-                          {formatRelative(n.createdAt)}
-                        </Typography>
-                      </>
-                    }
-                    slotProps={{
-                      primary: {
-                        sx: {
-                          fontWeight: n.read ? 500 : 700,
-                          fontSize: "0.825rem",
-                          lineHeight: 1.3,
-                          whiteSpace: "normal",
-                          wordBreak: "break-word",
-                          overflowWrap: "anywhere",
-                        },
-                      },
-                      secondary: {
-                        sx: { mt: 0.25 },
-                      },
-                    }}
-                  />
-                </MenuItem>
-              );
-            })}
-          </Box>
+          <MenuList disablePadding sx={{ maxHeight: 360, overflowY: "auto", overflowX: "hidden" }}>
+            <AnimatePresence initial={false}>
+              {items.map((n, i) => {
+                const Icon = TYPE_ICONS[n.type] || InfoOutlinedIcon;
+                const color = TYPE_COLORS[n.type] || TYPE_COLORS.info;
+                return (
+                  <Box
+                    key={n.id}
+                    component={motion.div}
+                    variants={hubAlertItem}
+                    initial="hidden"
+                    animate="show"
+                    custom={i}
+                  >
+                    <MenuItem
+                      onClick={() => handleSelect(n)}
+                      sx={{
+                        py: 1.5,
+                        alignItems: "flex-start",
+                        gap: 1,
+                        whiteSpace: "normal",
+                        width: "100%",
+                        maxWidth: "100%",
+                        boxSizing: "border-box",
+                        background: n.read ? "transparent" : `${color}08`,
+                        borderLeft: n.read ? "3px solid transparent" : `3px solid ${color}`,
+                      }}
+                    >
+                      <ListItemIcon sx={{ minWidth: 32, mt: 0.25, flexShrink: 0 }}>
+                        <Icon sx={{ fontSize: 18, color }} />
+                      </ListItemIcon>
+                      <ListItemText
+                        sx={{ minWidth: 0, flex: 1, m: 0 }}
+                        primary={n.title}
+                        secondary={
+                          <>
+                            <Typography
+                              component="span"
+                              variant="caption"
+                              sx={{
+                                display: "block",
+                                lineHeight: 1.4,
+                                whiteSpace: "normal",
+                                wordBreak: "break-word",
+                                overflowWrap: "anywhere",
+                              }}
+                            >
+                              {n.body}
+                            </Typography>
+                            <Typography component="span" variant="caption" color="text.secondary">
+                              {formatRelative(n.createdAt)}
+                            </Typography>
+                          </>
+                        }
+                        slotProps={{
+                          primary: {
+                            sx: {
+                              fontWeight: n.read ? 500 : 700,
+                              fontSize: "0.825rem",
+                              lineHeight: 1.3,
+                              whiteSpace: "normal",
+                              wordBreak: "break-word",
+                              overflowWrap: "anywhere",
+                            },
+                          },
+                          secondary: { sx: { mt: 0.25 } },
+                        }}
+                      />
+                    </MenuItem>
+                  </Box>
+                );
+              })}
+            </AnimatePresence>
+          </MenuList>
         )}
-      </Menu>
+        </Box>
+      </Popover>
     </>
   );
 }

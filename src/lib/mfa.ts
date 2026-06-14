@@ -1,7 +1,8 @@
 import { TOTP, Secret } from "otpauth";
 import QRCode from "qrcode";
+import { getAgServiziCompany } from "@/config/ag-servizi-company";
 
-const ISSUER = "Coresuite AG Servizi";
+const ISSUER = `Coresuite ${getAgServiziCompany().tradeName}`;
 
 export function createMfaSecret(_email: string) {
   const secret = new Secret();

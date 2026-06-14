@@ -364,8 +364,8 @@ export default function ExpressDashboard({ serviceColor, onOpenSale, onNavigateP
           <Card variant="outlined" sx={{ height: "100%" }}>
             <CardContent>
               <Typography sx={{ fontWeight: 700, mb: 2 }}>Trend vendite · 7 giorni</Typography>
-              <Box sx={{ height: 220 }}>
-                <ResponsiveContainer width="100%" height="100%">
+              <Box sx={{ height: 220, minWidth: 0 }}>
+                <ResponsiveContainer width="100%" height={220} minWidth={0}>
                   <AreaChart data={data.salesTrend || []}>
                     <defs>
                       <linearGradient id="expressRev" x1="0" y1="0" x2="0" y2="1">

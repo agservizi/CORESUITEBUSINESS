@@ -13,11 +13,6 @@ import { Box, Typography } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import { AnimatePresence, motion } from "framer-motion";
 import BusinessCenterIcon from "@mui/icons-material/BusinessCenter";
-import AnalyticsIcon from "@mui/icons-material/Analytics";
-import AccountTreeIcon from "@mui/icons-material/AccountTree";
-import AccountBalanceIcon from "@mui/icons-material/AccountBalance";
-import PeopleIcon from "@mui/icons-material/People";
-import LibraryBooksIcon from "@mui/icons-material/LibraryBooks";
 import {
   persistServiceLaunch,
   type ServiceLaunchPayload,
@@ -25,15 +20,7 @@ import {
 import { getShellTokens } from "@/theme/shell-tokens";
 import { recordRecentService } from "@/lib/hub-preferences";
 import { resolveNavigationTarget } from "@/lib/platform-hosts";
-
-const ICONS: Record<string, React.ElementType> = {
-  BusinessCenter: BusinessCenterIcon,
-  Analytics: AnalyticsIcon,
-  AccountTree: AccountTreeIcon,
-  AccountBalance: AccountBalanceIcon,
-  People: PeopleIcon,
-  LibraryBooks: LibraryBooksIcon,
-};
+import { getServiceIcon } from "@/lib/service-icons";
 
 type LaunchTarget = ServiceLaunchPayload & { url: string };
 
@@ -86,7 +73,7 @@ export function ServiceLaunchProvider({ children }: { children: ReactNode }) {
     [launchService, launching]
   );
 
-  const Icon = launching ? ICONS[launching.icon] || BusinessCenterIcon : BusinessCenterIcon;
+  const Icon = launching ? getServiceIcon(launching.icon) : BusinessCenterIcon;
 
   return (
     <ServiceLaunchContext.Provider value={value}>

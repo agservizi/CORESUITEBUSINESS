@@ -18,7 +18,6 @@ import {
   listActiveDiscountCampaigns,
   listOpenStockAlerts,
   notifyExpressSale,
-  seedDefaultCampaignsIfEmpty,
   syncStockAlerts,
 } from "@/lib/platform/express-admin";
 import {
@@ -40,7 +39,6 @@ async function getExpressSettingsData() {
 }
 
 export async function getExpressDashboard(period: ExpressPeriod = "day") {
-  await seedDefaultCampaignsIfEmpty();
   await syncStockAlerts();
 
   const now = new Date();
@@ -168,12 +166,6 @@ export async function getExpressDashboard(period: ExpressPeriod = "day") {
 }
 
 export async function getPosContext() {
-  try {
-    await seedDefaultCampaignsIfEmpty();
-  } catch (e) {
-    console.warn("Express campaign seed skipped:", e);
-  }
-
   const [operators, allOffers, products, settings, campaigns] = await Promise.all([
     prisma.expressOperator.findMany({
       where: { active: true },

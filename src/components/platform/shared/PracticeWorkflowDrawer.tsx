@@ -41,7 +41,6 @@ export default function PracticeWorkflowDrawer({
   const [status, setStatus] = useState("");
   const [notes, setNotes] = useState("");
   const [delegaRecipient, setDelegaRecipient] = useState("");
-  const [otpPreview, setOtpPreview] = useState("");
 
   const apiBase = `/api/platform/${entityType}`;
 
@@ -96,8 +95,7 @@ export default function PracticeWorkflowDrawer({
       headers: jsonMutationHeaders(),
       body: JSON.stringify({ recipient: delegaRecipient }),
     });
-    const data = await res.json();
-    if (data.otpPreview) setOtpPreview(data.otpPreview);
+    await res.json();
     await load();
   }
 
@@ -154,11 +152,6 @@ export default function PracticeWorkflowDrawer({
                 </Typography>
                 <TextField size="small" label="Email destinatario" value={delegaRecipient} onChange={(e) => setDelegaRecipient(e.target.value)} />
                 <Button variant="outlined" onClick={sendDelega}>Invia OTP delega</Button>
-                {otpPreview && (
-                  <Typography variant="caption" color="warning.main">
-                    OTP demo: {otpPreview}
-                  </Typography>
-                )}
               </>
             )}
 

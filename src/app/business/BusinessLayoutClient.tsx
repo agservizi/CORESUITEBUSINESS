@@ -7,7 +7,7 @@ import BusinessTopBar from "@/components/business/BusinessTopBar";
 import BusinessWorkspace from "@/components/business/BusinessWorkspace";
 import ServiceEnterTransition from "@/components/hub/ServiceEnterTransition";
 import { BusinessNavigationProvider } from "@/context/BusinessNavigationProvider";
-import { APP_SHELL, shellPageSx } from "@/components/layout/app-shell";
+import { APP_SHELL, AppShellMainColumn, shellPageSx } from "@/components/layout/app-shell";
 
 interface User {
   id: string;
@@ -33,6 +33,7 @@ export default function BusinessLayoutClient({
 
   const sidebarWidth = APP_SHELL.sidebarWidth;
   const sidebarCollapsedWidth = APP_SHELL.sidebarCollapsedWidth;
+  const sidebarOffset = { xs: 0, md: `${sidebarOpen ? sidebarWidth : sidebarCollapsedWidth}px` };
 
   return (
     <BusinessNavigationProvider>
@@ -50,36 +51,14 @@ export default function BusinessLayoutClient({
           width={sidebarWidth}
           collapsedWidth={sidebarCollapsedWidth}
         />
-        <Box
-          component="main"
-          sx={{
-            flex: 1,
-            minWidth: 0,
-            ml: { xs: 0, md: `${sidebarOpen ? sidebarWidth : sidebarCollapsedWidth}px` },
-            transition: "margin-left 0.25s ease",
-            height: "100vh",
-            display: "flex",
-            flexDirection: "column",
-            overflow: "hidden",
-          }}
+        <AppShellMainColumn
+          sidebarOffset={sidebarOffset}
+          topBar={<BusinessTopBar user={user} onMenuClick={() => setSidebarOpen(!sidebarOpen)} />}
         >
-          <BusinessTopBar user={user} onMenuClick={() => setSidebarOpen(!sidebarOpen)} />
-          <Box
-            sx={{
-              flex: 1,
-              minWidth: 0,
-              minHeight: 0,
-              p: { xs: 2, md: 3 },
-              overflow: "auto",
-              display: "flex",
-              flexDirection: "column",
-            }}
-          >
-              <ServiceEnterTransition serviceSlug="business">
-                <BusinessWorkspace />
-              </ServiceEnterTransition>
-            </Box>
-        </Box>
+          <ServiceEnterTransition serviceSlug="business">
+            <BusinessWorkspace />
+          </ServiceEnterTransition>
+        </AppShellMainColumn>
       </Box>
     </BusinessNavigationProvider>
   );

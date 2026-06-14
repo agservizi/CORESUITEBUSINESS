@@ -66,7 +66,6 @@ export async function sendAnprDelegaOtp(requestId: string, recipient: string, us
   const req = await prisma.anprRequest.findUnique({ where: { id: requestId } });
   if (!req) throw new Error("Richiesta non trovata");
 
-  const otp = Math.floor(100000 + Math.random() * 900000).toString();
   await prisma.anprRequest.update({
     where: { id: requestId },
     data: {
@@ -75,8 +74,7 @@ export async function sendAnprDelegaOtp(requestId: string, recipient: string, us
     },
   });
 
-  // OTP simulato — in produzione inviare via email/SMS
-  return { success: true, otpPreview: otp, recipient };
+  return { success: true, recipient };
 }
 
 export async function verifyAnprDelega(requestId: string, userId: string) {

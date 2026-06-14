@@ -34,11 +34,10 @@ function extractSnippet(source: Buffer | undefined): { snippet: string; body: st
   return { snippet: cleaned.slice(0, 240), body: cleaned.slice(0, 10000) };
 }
 
-export async function syncPecInboxFromServer(): Promise<{ imported: number; total: number; mode: "imap" | "demo" }> {
+export async function syncPecInboxFromServer(): Promise<{ imported: number; total: number; mode: "imap" | "disabled" }> {
   if (!isPecImapConfigured()) {
-    const { syncPecInboxDemo } = await import("@/lib/platform/posta-telematica-service");
-    const demo = await syncPecInboxDemo();
-    return { imported: demo.imported, total: await prisma.pecInboxMessage.count(), mode: "demo" };
+    const total = await prisma.pecInboxMessage.count();
+    return { imported: 0, total, mode: "disabled" };
   }
 
   const folder = process.env.PEC_IMAP_FOLDER?.trim() || "INBOX";
@@ -77,7 +76,7 @@ export async function syncPecInboxFromServer(): Promise<{ imported: number; tota
         imported++;
       }
 
-      return { imported, total: await prisma.pecInboxMessage.count(), mode: "imap" };
+      return { imported, total: await prisma.pecInboxMessage.count(), mode: "imap" as const };
     } finally {
       lock.release();
     }

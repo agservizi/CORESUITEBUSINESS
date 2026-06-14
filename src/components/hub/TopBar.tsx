@@ -5,12 +5,13 @@ import {
   Box,
   Typography,
   Avatar,
-  Menu,
   MenuItem,
+  MenuList,
   ListItemIcon,
   Divider,
   IconButton,
   Tooltip,
+  Popover,
 } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import { motion } from "framer-motion";
@@ -23,8 +24,11 @@ import { useRouter } from "next/navigation";
 import { getRoleLabel } from "@/lib/roles";
 import { useThemeMode } from "@/context/ThemeModeProvider";
 import { getShellTokens, shellMenuPaperSx } from "@/theme/shell-tokens";
+import { hubMenuDropdown } from "@/lib/hub-motion";
+import { topbarActionsSx, topbarIconButtonSx, topbarToolsGroupSx } from "@/components/layout/app-shell";
 import HubNotificationsMenu from "./HubNotificationsMenu";
 import AiContextTopBarButton from "@/components/ai/AiContextTopBarButton";
+import CoresuiteTopBarLogo from "@/components/brand/CoresuiteTopBarLogo";
 
 interface TopBarProps {
   user: {
@@ -75,49 +79,38 @@ export default function TopBar({ user, onSearchClick }: TopBarProps) {
         justifyContent: "space-between",
       }}
     >
-      <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-        <Box
-          sx={{
-            width: 32,
-            height: 32,
-            borderRadius: "9px",
-            background: "linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-          }}
-        >
-          <Typography sx={{ fontSize: 15, fontWeight: 800, color: "#fff", lineHeight: 1 }}>
-            C
-          </Typography>
-        </Box>
-        <Typography sx={{ fontWeight: 700, fontSize: "1rem", letterSpacing: "-0.02em" }}>
-          Coresuite
-        </Typography>
-      </Box>
+      <CoresuiteTopBarLogo />
 
-      <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-        {onSearchClick && (
-          <Tooltip title="Cerca servizio (Ctrl+K)">
-            <IconButton size="small" onClick={onSearchClick} sx={{ color: "text.secondary" }}>
-              <SearchIcon fontSize="small" />
+      <Box sx={topbarActionsSx}>
+        <Box sx={topbarToolsGroupSx}>
+          {onSearchClick && (
+            <Tooltip title="Cerca servizio (Ctrl+K)">
+              <IconButton size="small" onClick={onSearchClick} sx={topbarIconButtonSx}>
+                <SearchIcon fontSize="small" />
+              </IconButton>
+            </Tooltip>
+          )}
+
+          <Tooltip title={mode === "dark" ? "Tema chiaro" : "Tema scuro"}>
+            <IconButton size="small" onClick={toggleMode} sx={topbarIconButtonSx}>
+              {mode === "dark" ? <LightModeIcon fontSize="small" /> : <DarkModeIcon fontSize="small" />}
             </IconButton>
           </Tooltip>
-        )}
 
-        <Tooltip title={mode === "dark" ? "Tema chiaro" : "Tema scuro"}>
-          <IconButton size="small" onClick={toggleMode} sx={{ color: "text.secondary" }}>
-            {mode === "dark" ? <LightModeIcon fontSize="small" /> : <DarkModeIcon fontSize="small" />}
-          </IconButton>
-        </Tooltip>
+          <AiContextTopBarButton />
 
-        <AiContextTopBarButton />
-
-        <HubNotificationsMenu />
+          <HubNotificationsMenu />
+        </Box>
 
         <Tooltip title="Account">
           <Box
-            sx={{ display: "flex", alignItems: "center", gap: 1, cursor: "pointer", ml: 0.5 }}
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              gap: 1.25,
+              cursor: "pointer",
+              pl: { xs: 0, sm: 0.5 },
+            }}
             onClick={(e) => setAnchor(e.currentTarget)}
           >
             <Avatar
@@ -143,7 +136,7 @@ export default function TopBar({ user, onSearchClick }: TopBarProps) {
         </Tooltip>
       </Box>
 
-      <Menu
+      <Popover
         anchorEl={anchor}
         open={Boolean(anchor)}
         onClose={() => setAnchor(null)}
@@ -157,27 +150,34 @@ export default function TopBar({ user, onSearchClick }: TopBarProps) {
                 mt: 1,
                 minWidth: 200,
                 backdropFilter: "blur(20px)",
-                boxShadow: theme.palette.mode === "dark" ? "0 8px 32px rgba(0,0,0,0.4)" : "0 8px 32px rgba(15,23,42,0.1)",
+                boxShadow:
+                  theme.palette.mode === "dark"
+                    ? "0 8px 32px rgba(0,0,0,0.4)"
+                    : "0 8px 32px rgba(15,23,42,0.1)",
               },
             ],
           },
         }}
       >
+        <Box component={motion.div} variants={hubMenuDropdown} initial="hidden" animate="show">
         <Box sx={{ px: 2, py: 1.5 }}>
           <Typography sx={{ fontWeight: 600, fontSize: "0.875rem" }}>{user.name || "Utente"}</Typography>
           <Typography variant="caption" color="text.secondary">{user.email}</Typography>
         </Box>
         <Divider sx={{ borderColor: t.borderColor }} />
-        <MenuItem onClick={() => { setAnchor(null); router.push("/profile"); }}>
-          <ListItemIcon><PersonIcon fontSize="small" /></ListItemIcon>
-          Profilo
-        </MenuItem>
-        <Divider sx={{ borderColor: t.borderColor }} />
-        <MenuItem onClick={handleLogout} sx={{ color: "error.main" }}>
-          <ListItemIcon><LogoutIcon fontSize="small" sx={{ color: "error.main" }} /></ListItemIcon>
-          Disconnetti
-        </MenuItem>
-      </Menu>
+        <MenuList disablePadding>
+          <MenuItem onClick={() => { setAnchor(null); router.push("/profile"); }}>
+            <ListItemIcon><PersonIcon fontSize="small" /></ListItemIcon>
+            Profilo
+          </MenuItem>
+          <Divider component="li" sx={{ borderColor: t.borderColor }} />
+          <MenuItem onClick={handleLogout} sx={{ color: "error.main" }}>
+            <ListItemIcon><LogoutIcon fontSize="small" sx={{ color: "error.main" }} /></ListItemIcon>
+            Disconnetti
+          </MenuItem>
+        </MenuList>
+        </Box>
+      </Popover>
     </Box>
   );
 }

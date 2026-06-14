@@ -20,6 +20,13 @@ function nextCode(prefix: string) {
   return `${prefix}-${n}`;
 }
 
+function requireClientId(data: Record<string, unknown>, field = "clientId"): string {
+  const value = data[field];
+  const id = value == null ? "" : String(value).trim();
+  if (!id) throw new Error("Cliente obbligatorio");
+  return id;
+}
+
 export async function createModuleRecord(
   moduleKey: string,
   data: Record<string, unknown>,
@@ -48,7 +55,7 @@ export async function createModuleRecord(
       const endsAt = data.endsAt ? new Date(String(data.endsAt)) : defaultAppointmentEndsAt(startsAt);
       const created = await prisma.appointment.create({
         data: {
-          clientId: String(data.clientId || "demo-client"),
+          clientId: requireClientId(data),
           title: String(data.title),
           serviceType: String(data.serviceType),
           startsAt,
@@ -70,7 +77,7 @@ export async function createModuleRecord(
       return prisma.practice.create({
         data: {
           code: nextCode("PR"),
-          clientId: String(data.clientId || "demo-client"),
+          clientId: requireClientId(data),
           category: data.category as "CAF" | "PATRONATO",
           practiceType: String(data.practiceType),
           year: data.year ? Number(data.year) : undefined,
@@ -104,7 +111,7 @@ export async function createModuleRecord(
     case "energia":
       return prisma.energyContract.create({
         data: {
-          clientId: String(data.clientId || "demo-client"),
+          clientId: requireClientId(data),
           supplier: data.supplier ? String(data.supplier) : undefined,
           contractType: data.contractType ? String(data.contractType) : undefined,
           pod: data.pod ? String(data.pod) : undefined,
@@ -114,7 +121,7 @@ export async function createModuleRecord(
     case "anpr":
       return prisma.anprRequest.create({
         data: {
-          clientId: String(data.clientId || "demo-client"),
+          clientId: requireClientId(data),
           requestType: String(data.requestType),
           scheduledAt: data.scheduledAt ? new Date(String(data.scheduledAt)) : undefined,
           notes: data.notes ? String(data.notes) : undefined,
@@ -123,7 +130,7 @@ export async function createModuleRecord(
     case "cie":
       return prisma.cieBooking.create({
         data: {
-          clientId: String(data.clientId || "demo-client"),
+          clientId: requireClientId(data),
           slotAt: new Date(String(data.slotAt)),
           notes: data.notes ? String(data.notes) : undefined,
         },
@@ -131,7 +138,7 @@ export async function createModuleRecord(
     case "visure-cr":
       return prisma.visureCase.create({
         data: {
-          clientId: String(data.clientId || "demo-client"),
+          clientId: requireClientId(data),
           caseType: String(data.caseType),
           registry: data.registry ? String(data.registry) : undefined,
         },
@@ -167,7 +174,7 @@ export async function createModuleRecord(
     case "fedelta":
       return prisma.loyaltyPoint.create({
         data: {
-          clientId: String(data.clientId || "demo-client"),
+          clientId: requireClientId(data),
           points: Number(data.points) || 0,
           reason: data.reason ? String(data.reason) : undefined,
         },
@@ -175,7 +182,7 @@ export async function createModuleRecord(
     case "curriculum":
       return prisma.curriculumRecord.create({
         data: {
-          clientId: String(data.clientId || "demo-client"),
+          clientId: requireClientId(data),
           title: String(data.title),
           notes: data.notes ? String(data.notes) : undefined,
         },
@@ -183,7 +190,7 @@ export async function createModuleRecord(
     case "aci":
       return prisma.aciPractice.create({
         data: {
-          clientId: String(data.clientId || "demo-client"),
+          clientId: requireClientId(data),
           practiceType: String(data.practiceType),
           plate: data.plate ? String(data.plate) : undefined,
         },
@@ -225,7 +232,7 @@ export async function createModuleRecord(
     case "web-projects":
       return prisma.webProject.create({
         data: {
-          clientId: String(data.clientId || "demo-client"),
+          clientId: requireClientId(data),
           name: String(data.name),
           domain: data.domain ? String(data.domain) : undefined,
           notes: data.notes ? String(data.notes) : undefined,

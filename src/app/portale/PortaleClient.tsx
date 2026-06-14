@@ -24,6 +24,7 @@ import {
   Alert,
 } from "@mui/material";
 import { useRouter } from "next/navigation";
+import { navigateResolved } from "@/lib/navigate-resolved";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import AddIcon from "@mui/icons-material/Add";
 import PaymentIcon from "@mui/icons-material/Payment";
@@ -32,6 +33,7 @@ import { jsonMutationHeaders } from "@/lib/csrf-client";
 import { getShellTokens, shellPaperSx } from "@/theme/shell-tokens";
 import ThemeModeToggle from "@/components/layout/ThemeModeToggle";
 import AiContextTopBarButton from "@/components/ai/AiContextTopBarButton";
+import { AppShellFooter } from "@/components/layout/app-shell";
 
 interface PortaleClientProps {
   user: { id: string; email: string; name: string | null; role: string };
@@ -139,7 +141,15 @@ export default function PortaleClient({ user, children }: PortaleClientProps) {
   }
 
   return (
-    <Box sx={(theme) => ({ minHeight: "100vh", background: getShellTokens(theme).overlay, p: { xs: 2, md: 4 } })}>
+    <Box
+      sx={(theme) => ({
+        minHeight: "100vh",
+        background: getShellTokens(theme).overlay,
+        display: "flex",
+        flexDirection: "column",
+      })}
+    >
+      <Box sx={{ flex: 1, p: { xs: 2, md: 4 } }}>
       <Box sx={{ maxWidth: 960, mx: "auto" }}>
         <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 3, flexWrap: "wrap", gap: 2 }}>
           <Box>
@@ -163,7 +173,7 @@ export default function PortaleClient({ user, children }: PortaleClientProps) {
               Paga online
             </Button>
             {user.role !== "CLIENTE" && (
-              <Button startIcon={<ArrowBackIcon />} onClick={() => router.push("/dashboard")} variant="outlined" size="small">
+              <Button startIcon={<ArrowBackIcon />} onClick={() => navigateResolved(router, "/dashboard")} variant="outlined" size="small">
                 Service Hub
               </Button>
             )}
@@ -398,6 +408,8 @@ export default function PortaleClient({ user, children }: PortaleClientProps) {
           </Button>
         </DialogActions>
       </Dialog>
+      </Box>
+      <AppShellFooter tagline="Portale Cliente" />
     </Box>
   );
 }

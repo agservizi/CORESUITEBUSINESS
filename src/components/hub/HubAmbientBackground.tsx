@@ -3,8 +3,15 @@
 import { Box } from "@mui/material";
 import { motion } from "framer-motion";
 import { getShellTokens } from "@/theme/shell-tokens";
+import { getHubRoleAccent } from "@/lib/hub-role-accent";
 
-export default function HubAmbientBackground() {
+interface HubAmbientBackgroundProps {
+  role?: string;
+}
+
+export default function HubAmbientBackground({ role = "USER" }: HubAmbientBackgroundProps) {
+  const accent = getHubRoleAccent(role);
+
   return (
     <Box sx={{ position: "absolute", inset: 0, overflow: "hidden", pointerEvents: "none" }}>
       <Box
@@ -34,7 +41,7 @@ export default function HubAmbientBackground() {
           width: 480,
           height: 480,
           borderRadius: "50%",
-          background: "radial-gradient(circle, rgba(99,102,241,0.18) 0%, transparent 70%)",
+          background: `radial-gradient(circle, ${accent.meshA} 0%, transparent 70%)`,
           filter: "blur(40px)",
         }}
       />
@@ -49,7 +56,7 @@ export default function HubAmbientBackground() {
           width: 400,
           height: 400,
           borderRadius: "50%",
-          background: "radial-gradient(circle, rgba(139,92,246,0.14) 0%, transparent 70%)",
+          background: `radial-gradient(circle, ${accent.meshB} 0%, transparent 70%)`,
           filter: "blur(50px)",
         }}
       />
@@ -64,8 +71,18 @@ export default function HubAmbientBackground() {
           width: 320,
           height: 320,
           borderRadius: "50%",
-          background: "radial-gradient(circle, rgba(14,165,233,0.1) 0%, transparent 70%)",
+          background: `radial-gradient(circle, ${accent.meshC} 0%, transparent 70%)`,
           filter: "blur(45px)",
+        }}
+      />
+
+      <Box
+        sx={{
+          position: "absolute",
+          inset: 0,
+          opacity: 0.045,
+          backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E")`,
+          mixBlendMode: "overlay",
         }}
       />
     </Box>

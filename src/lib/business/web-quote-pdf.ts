@@ -51,7 +51,7 @@ function drawFooter(doc: PdfDoc, studio: StudioBranding) {
     .strokeColor("#e2e8f0")
     .lineWidth(0.5)
     .stroke();
-  const parts = [studio.name, studio.email, studio.phone, studio.website].filter(Boolean);
+  const parts = [studio.name, studio.address, studio.email, studio.phone, studio.website].filter(Boolean);
   doc.font("Helvetica").fontSize(7.5).fillColor("#94a3b8");
   doc.text(parts.join("  ·  "), M, FOOTER_TEXT_Y, { width: CONTENT_W, align: "center", lineBreak: false });
   doc.restore();
@@ -80,6 +80,9 @@ function drawHeader(doc: PdfDoc, accent: string, quote: WebQuoteForPdf, studio: 
 
   doc.font("Helvetica-Bold").fontSize(15).fillColor("#0f172a").text(studio.name, M, M);
   doc.font("Helvetica").fontSize(8.5).fillColor("#64748b").text(studio.tagline, M, doc.y + 1);
+  if (studio.address) {
+    doc.fontSize(8).text(studio.address, M, doc.y + 2, { width: CONTENT_W / 2 });
+  }
 
   const metaX = PAGE_W - M - 168;
   doc.font("Helvetica-Bold").fontSize(17).fillColor(accent).text("PREVENTIVO", metaX, M, { width: 168, align: "right" });

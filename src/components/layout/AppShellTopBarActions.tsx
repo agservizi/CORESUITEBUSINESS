@@ -25,11 +25,33 @@ export function getAppShellUserInitials(name?: string | null, email?: string) {
 
 const DEFAULT_AVATAR_GRADIENT = "linear-gradient(135deg, #6366f1, #8b5cf6)";
 
+/** Pulsante icona topbar — area tap uniforme, hover non clippato dal badge. */
+export const topbarIconButtonSx = {
+  color: "text.secondary",
+  width: 40,
+  height: 40,
+  p: 0.75,
+  borderRadius: 2,
+  overflow: "visible",
+  flexShrink: 0,
+  "&:hover": {
+    bgcolor: "action.hover",
+  },
+} as const;
+
+/** Gruppo icone (tema, AI, notifiche, search). */
+export const topbarToolsGroupSx = {
+  display: "flex",
+  alignItems: "center",
+  gap: { xs: 0.75, sm: 1.25 },
+  flexShrink: 0,
+} as const;
+
 /** Contenitore azioni destra topbar (tema, notifiche, utente). */
 export const topbarActionsSx = {
   display: "flex",
   alignItems: "center",
-  gap: 1.5,
+  gap: { xs: 1.25, sm: 2 },
   ml: "auto",
   flexShrink: 0,
 } as const;
@@ -69,8 +91,10 @@ export default function AppShellTopBarActions({
 
   return (
     <Box sx={topbarActionsSx}>
-      <ThemeModeToggle />
-      {children}
+      <Box sx={topbarToolsGroupSx}>
+        <ThemeModeToggle />
+        {children}
+      </Box>
       <Box sx={topbarUserBlockSx}>
         <Typography sx={{ fontWeight: 600, fontSize: "0.825rem", lineHeight: 1.2 }}>
           {user.name || user.email}

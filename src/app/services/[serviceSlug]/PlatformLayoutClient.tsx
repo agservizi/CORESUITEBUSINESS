@@ -8,7 +8,7 @@ import PlatformWorkspace from "@/components/platform/PlatformWorkspace";
 import ServiceEnterTransition from "@/components/hub/ServiceEnterTransition";
 import { PlatformNavigationProvider } from "@/context/PlatformNavigationProvider";
 import { PlatformUserProvider } from "@/context/PlatformUserContext";
-import { APP_SHELL, shellPageSx } from "@/components/layout/app-shell";
+import { APP_SHELL, AppShellMainColumn, shellPageSx } from "@/components/layout/app-shell";
 
 interface User {
   id: string;
@@ -37,41 +37,34 @@ export default function PlatformLayoutClient({
 
   const sidebarWidth = APP_SHELL.sidebarWidth;
   const sidebarCollapsedWidth = APP_SHELL.sidebarCollapsedWidth;
+  const sidebarOffset = { xs: 0, md: `${sidebarOpen ? sidebarWidth : sidebarCollapsedWidth}px` };
 
   return (
     <PlatformNavigationProvider serviceSlug={serviceSlug}>
       <PlatformUserProvider user={{ id: user.id, role: user.role }}>
-      <Box sx={(theme) => ({ ...shellPageSx(theme), display: "flex", minHeight: "100vh" })}>
-        <PlatformSidebar
-          open={sidebarOpen}
-          onToggle={() => setSidebarOpen(!sidebarOpen)}
-          width={sidebarWidth}
-          collapsedWidth={sidebarCollapsedWidth}
-          userRole={user.role}
-        />
-        <Box
-          component="main"
-          sx={{
-            flex: 1,
-            ml: { xs: 0, md: `${sidebarOpen ? sidebarWidth : sidebarCollapsedWidth}px` },
-            transition: "margin-left 0.25s ease",
-            minHeight: "100vh",
-            display: "flex",
-            flexDirection: "column",
-          }}
-        >
-          <PlatformTopBar
-            serviceSlug={serviceSlug}
-            user={user}
-            onMenuClick={() => setSidebarOpen(!sidebarOpen)}
+        <Box sx={(theme) => ({ ...shellPageSx(theme), display: "flex", height: "100vh", overflow: "hidden" })}>
+          <PlatformSidebar
+            open={sidebarOpen}
+            onToggle={() => setSidebarOpen(!sidebarOpen)}
+            width={sidebarWidth}
+            collapsedWidth={sidebarCollapsedWidth}
+            userRole={user.role}
           />
-          <Box sx={{ flex: 1, p: { xs: 2, md: 3 }, overflow: "hidden" }}>
+          <AppShellMainColumn
+            sidebarOffset={sidebarOffset}
+            topBar={
+              <PlatformTopBar
+                serviceSlug={serviceSlug}
+                user={user}
+                onMenuClick={() => setSidebarOpen(!sidebarOpen)}
+              />
+            }
+          >
             <ServiceEnterTransition serviceSlug={serviceSlug}>
               <PlatformWorkspace />
             </ServiceEnterTransition>
-          </Box>
+          </AppShellMainColumn>
         </Box>
-      </Box>
       </PlatformUserProvider>
     </PlatformNavigationProvider>
   );

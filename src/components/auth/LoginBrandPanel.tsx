@@ -9,6 +9,7 @@ import TrendingUpIcon from "@mui/icons-material/TrendingUp";
 import ShieldOutlinedIcon from "@mui/icons-material/ShieldOutlined";
 import HubAmbientBackground from "@/components/hub/HubAmbientBackground";
 import { hubFadeUpSoft, hubStaggerContainer } from "@/lib/hub-motion";
+import CoresuiteLogo from "@/components/brand/CoresuiteLogo";
 
 const HIGHLIGHTS = [
   { icon: BoltIcon, label: "Express", color: "#6366f1" },
@@ -46,25 +47,8 @@ export default function LoginBrandPanel() {
       />
 
       <Box sx={{ position: "relative", zIndex: 1 }}>
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 6 }}>
-          <Box
-            sx={{
-              width: 48,
-              height: 48,
-              borderRadius: 2.5,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              bgcolor: "rgba(255,255,255,0.18)",
-              border: "1px solid rgba(255,255,255,0.28)",
-              boxShadow: "0 8px 32px rgba(0,0,0,0.12)",
-            }}
-          >
-            <Typography sx={{ fontWeight: 900, fontSize: "1.35rem", lineHeight: 1 }}>C</Typography>
-          </Box>
-          <Typography sx={{ fontWeight: 800, fontSize: "1.15rem", letterSpacing: "-0.02em" }}>
-            Coresuite
-          </Typography>
+        <Box sx={{ mb: 6 }}>
+          <CoresuiteLogo size="lg" showTagline variant="onDark" link={false} />
         </Box>
 
         <Typography

@@ -15,6 +15,8 @@ const PUBLIC_PATHS = [
   "/login",
   "/api/auth/login",
   "/api/payments/stripe/webhook",
+  "/express/scan",
+  "/api/platform/express/scan-session/submit",
 ];
 
 function redirectHubServicePaths(request: NextRequest): NextResponse | null {
@@ -70,6 +72,25 @@ function rewriteSubdomainRequest(request: NextRequest): NextResponse | null {
     return NextResponse.next();
   }
 
+  if (pathname === "/scan" || pathname.startsWith("/scan/")) {
+    return NextResponse.rewrite(
+      new URL(`/express/scan${pathname.slice("/scan".length)}${search}`, request.url)
+    );
+  }
+
+  if (pathname === "/express/scan" || pathname.startsWith("/express/scan/")) {
+    return NextResponse.next();
+  }
+
+  if (
+    pathname === "/dashboard" ||
+    pathname.startsWith("/dashboard/") ||
+    pathname === "/profile" ||
+    pathname.startsWith("/profile/")
+  ) {
+    return NextResponse.redirect(`${getHubPublicUrl()}${pathname}${search}`);
+  }
+
   if (pathname === basePath || pathname.startsWith(`${basePath}/`)) {
     return NextResponse.next();
   }
@@ -84,13 +105,31 @@ function rewriteSubdomainRequest(request: NextRequest): NextResponse | null {
 }
 
 export async function proxy(request: NextRequest) {
+  const { pathname } = request.nextUrl;
+
+  if (
+    pathname === "/manifest.webmanifest" ||
+    pathname === "/icon.svg" ||
+    pathname === "/apple-icon.svg" ||
+    pathname.startsWith("/brand/")
+  ) {
+    return NextResponse.next();
+  }
+
   const hubRedirect = redirectHubServicePaths(request);
   if (hubRedirect) return hubRedirect;
 
   const subdomainRewrite = rewriteSubdomainRequest(request);
   if (subdomainRewrite) return subdomainRewrite;
 
-  const { pathname } = request.nextUrl;
+  if (
+    usesSubdomainRouting() &&
+    isHubHost(request.headers.get("host")) &&
+    (pathname === "/express/scan" || pathname.startsWith("/express/scan/"))
+  ) {
+    const { search } = request.nextUrl;
+    return NextResponse.redirect(getServicePublicUrl("express", `/scan${search}`));
+  }
 
   if (pathname === "/digitali" || pathname.startsWith("/digitali/")) {
     return NextResponse.redirect(new URL("/dashboard", request.url));
@@ -127,5 +166,7 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/((?!_next/static|_next/image|favicon.ico|api/auth/login|api/payments/stripe/webhook).*)"],
+  matcher: [
+    "/((?!_next/static|_next/image|favicon.ico|manifest\\.webmanifest|icon\\.svg|apple-icon\\.svg|brand/|api/auth/login|api/payments/stripe/webhook|api/platform/express/scan-session/submit).*)",
+  ],
 };

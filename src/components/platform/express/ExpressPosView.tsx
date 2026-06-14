@@ -38,6 +38,7 @@ import {
 import ExpressClientInsightPanel from "./ExpressClientInsightPanel";
 import ExpressCartSuggestions from "./ExpressCartSuggestions";
 import ExpressCameraScanner from "./ExpressCameraScanner";
+import ExpressPosScanQrDialog from "./ExpressPosScanQrDialog";
 import ExpressDigitalReceiptDialog from "./ExpressDigitalReceiptDialog";
 import AiSparkButton from "@/components/ai/AiSparkButton";
 
@@ -104,6 +105,11 @@ interface Props {
   onSaleComplete: () => void;
 }
 
+function isPhoneLikeDevice(): boolean {
+  if (typeof navigator === "undefined") return false;
+  return /Android|webOS|iPhone|iPod|IEMobile|Opera Mini/i.test(navigator.userAgent);
+}
+
 export default function ExpressPosView({ serviceColor, onSaleComplete }: Props) {
   const searchParams = useSearchParams();
   const [ctx, setCtx] = useState<PosContext | null>(null);
@@ -122,6 +128,7 @@ export default function ExpressPosView({ serviceColor, onSaleComplete }: Props) 
   const [selectedOperator, setSelectedOperator] = useState("");
   const [cart, setCart] = useState<CartLine[]>([]);
   const [cameraOpen, setCameraOpen] = useState(false);
+  const [qrScanOpen, setQrScanOpen] = useState(false);
   const [marginInfo, setMarginInfo] = useState<{ margin: number; marginPct: number } | null>(null);
   const [digitalReceipt, setDigitalReceipt] = useState<{ saleId: string; token?: string | null } | null>(null);
   const [cashSessionOpen, setCashSessionOpen] = useState<boolean | null>(null);
@@ -394,15 +401,22 @@ export default function ExpressPosView({ serviceColor, onSaleComplete }: Props) 
     setError("");
   }
 
-  async function handleScan() {
-    if (!scanValue.trim()) return;
-    const res = await fetch(`/api/platform/express?iccid=${encodeURIComponent(scanValue.trim())}`);
+  async function applyIccidFromScan(value: string, overrideNumber?: string | null) {
+    const trimmed = value.trim();
+    if (!trimmed) return;
+    setScanValue(trimmed);
+    const res = await fetch(`/api/platform/express?iccid=${encodeURIComponent(trimmed)}`);
     const data = await res.json();
     if (!data.iccid) {
       setError("ICCID non trovato o già venduto");
       return;
     }
-    addSimFromIccid(data.iccid);
+    addSimFromIccid(data.iccid, overrideNumber || undefined);
+  }
+
+  async function handleScan() {
+    if (!scanValue.trim()) return;
+    await applyIccidFromScan(scanValue);
   }
 
   async function submitSale() {
@@ -727,10 +741,14 @@ export default function ExpressPosView({ serviceColor, onSaleComplete }: Props) 
                 <Grid size={{ xs: 12 }}>
                   <Button
                     variant="outlined"
-                    onClick={() => setCameraOpen(true)}
+                    startIcon={<QrCodeScannerIcon />}
+                    onClick={() => {
+                      if (isPhoneLikeDevice()) setCameraOpen(true);
+                      else setQrScanOpen(true);
+                    }}
                     sx={{ borderColor: serviceColor, color: serviceColor, mr: 1 }}
                   >
-                    Scansiona con fotocamera
+                    Scansiona con smartphone
                   </Button>
                   <Button
                     variant="outlined"
@@ -860,20 +878,18 @@ export default function ExpressPosView({ serviceColor, onSaleComplete }: Props) 
         </Grid>
       </Grid>
 
+      <ExpressPosScanQrDialog
+        open={qrScanOpen}
+        onClose={() => setQrScanOpen(false)}
+        serviceColor={serviceColor}
+        onIccidScanned={applyIccidFromScan}
+      />
+
       <ExpressCameraScanner
         open={cameraOpen}
         onClose={() => setCameraOpen(false)}
         serviceColor={serviceColor}
-        onScan={async (value) => {
-          setScanValue(value);
-          const res = await fetch(`/api/platform/express?iccid=${encodeURIComponent(value.trim())}`);
-          const data = await res.json();
-          if (!data.iccid) {
-            setError("ICCID non trovato o già venduto");
-            return;
-          }
-          addSimFromIccid(data.iccid);
-        }}
+        onScan={applyIccidFromScan}
       />
 
       <ExpressDigitalReceiptDialog

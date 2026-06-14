@@ -6,14 +6,12 @@ import {
   createLoyaltyReward,
   addLoyaltyMovement,
   redeemLoyaltyReward,
-  seedDefaultRewards,
   getClientLoyaltyBalance,
 } from "@/lib/platform/fedelta-service";
 
 export const GET = withApi(
   async (request) => {
     const view = new URL(request.url).searchParams.get("view") || "balances";
-    await seedDefaultRewards();
 
     if (view === "rewards") {
       return NextResponse.json({ rewards: await listLoyaltyRewards(false) });

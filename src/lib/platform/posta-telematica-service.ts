@@ -217,23 +217,7 @@ export async function generatePostaReceiptPdfBuffer(messageId: string) {
 }
 
 export async function markPecInboxRead(id: string) {
-  return prisma.pecInboxMessage.update({ where: { id }, data: { seen: true } });
-}
-
-export async function syncPecInboxDemo() {
-  const count = await prisma.pecInboxMessage.count();
-  if (count > 0) return { imported: 0 };
-  await prisma.pecInboxMessage.create({
-    data: {
-      uid: `demo-${Date.now()}`,
-      sender: "protocollo@pec.example.it",
-      subject: "Messaggio PEC di esempio",
-      receivedAt: new Date(),
-      snippet: "Contenuto di esempio per la casella PEC in arrivo.",
-      body: "Questo è un messaggio PEC di demo. Configura IMAP PEC per sincronizzazione reale.",
-    },
-  });
-  return { imported: 1 };
+  return prisma.pecInboxMessage.update({ where: { id }, data: { seen: true } }  );
 }
 
 export async function syncPecInbox() {

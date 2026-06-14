@@ -19,6 +19,7 @@ import {
   FormControlLabel,
 } from "@mui/material";
 import { useRouter } from "next/navigation";
+import { navigateResolved } from "@/lib/navigate-resolved";
 import { AnimatePresence, motion } from "framer-motion";
 import PersonIcon from "@mui/icons-material/Person";
 import SecurityIcon from "@mui/icons-material/Security";
@@ -52,6 +53,7 @@ import {
   formatRelativeLogin,
   PROFILE_ACCENT,
 } from "@/components/profile/profile-utils";
+import { AppShellFooter } from "@/components/layout/app-shell";
 
 type LoginRecord = {
   id: string;
@@ -302,8 +304,18 @@ export default function ProfileClient() {
 
   if (loading) {
     return (
-      <Box sx={(theme) => ({ minHeight: "100vh", bgcolor: getShellTokens(theme).pageBg })}>
-        <ProfileSkeleton />
+      <Box
+        sx={(theme) => ({
+          minHeight: "100vh",
+          bgcolor: getShellTokens(theme).pageBg,
+          display: "flex",
+          flexDirection: "column",
+        })}
+      >
+        <Box sx={{ flex: 1 }}>
+          <ProfileSkeleton />
+        </Box>
+        <AppShellFooter />
       </Box>
     );
   }
@@ -321,9 +333,27 @@ export default function ProfileClient() {
   const pwdPreview = pwdForm.next ? validatePassword(pwdForm.next) : null;
 
   return (
-    <Box sx={(theme) => ({ minHeight: "100vh", bgcolor: getShellTokens(theme).pageBg, py: { xs: 2, md: 4 } })}>
-      <Box sx={{ maxWidth: 960, mx: "auto", px: { xs: 2, md: 4 } }}>
-        <ProfileHero user={user} onBack={() => router.push("/dashboard")} onSecurityAction={handleSecurityAction} />
+    <Box
+      sx={(theme) => ({
+        minHeight: "100vh",
+        bgcolor: getShellTokens(theme).pageBg,
+        display: "flex",
+        flexDirection: "column",
+      })}
+    >
+      <Box
+        sx={{
+          flex: 1,
+          width: "100%",
+          maxWidth: 960,
+          mx: "auto",
+          px: { xs: 2, md: 4 },
+          py: { xs: 2, md: 4 },
+          display: "flex",
+          flexDirection: "column",
+        }}
+      >
+        <ProfileHero user={user} onBack={() => navigateResolved(router, "/dashboard")} onSecurityAction={handleSecurityAction} />
 
         <Grid
           container
@@ -383,12 +413,14 @@ export default function ProfileClient() {
         </Tabs>
 
         <AnimatePresence mode="wait">
-          <motion.div
+          <Box
             key={tab}
+            component={motion.div}
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -8 }}
             transition={{ duration: 0.28 }}
+            sx={{ flex: 1 }}
           >
             {tab === "account" && (
               <Stack spacing={2.5}>
@@ -742,9 +774,10 @@ export default function ProfileClient() {
                 </ProfileSectionCard>
               </Stack>
             )}
-          </motion.div>
+          </Box>
         </AnimatePresence>
       </Box>
+      <AppShellFooter />
     </Box>
   );
 }

@@ -47,6 +47,7 @@ model User {
   cashSessionsOpened CashRegisterSession[] @relation("CashSessionOpened")
   cashSessionsClosed CashRegisterSession[] @relation("CashSessionClosed")
   webQuotes          WebQuote[]            @relation("WebQuoteAuthor")
+  expressScanSessions ExpressScanSession[]
 }
 
 model Session {
@@ -1545,6 +1546,20 @@ model ExpressPdaImport {
   saleId      String?
   createdById String?
   createdAt   DateTime @default(now())
+}
+
+model ExpressScanSession {
+  token          String   @id
+  userId         String
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  iccid          String?
+  assignedNumber String?
+  status         String   @default("waiting")
+  expiresAt      DateTime
+  createdAt      DateTime @default(now())
+
+  @@index([userId])
+  @@index([expiresAt])
 }
 
 model WebProject {

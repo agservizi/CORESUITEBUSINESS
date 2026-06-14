@@ -4,6 +4,7 @@ import {
   saleHasTaxableLines,
   uniqueTaxableVatRates,
 } from "@/lib/platform/express-vat";
+import { getAgServiziExpressStoreNameFallback } from "@/config/ag-servizi-company";
 
 export interface ExpressStoreInfo {
   store_name?: string;
@@ -74,7 +75,7 @@ function safeLogoSrc(src?: string): string | null {
 }
 
 export function buildExpressReceiptHtml(store: ExpressStoreInfo, receipt: ExpressReceiptInput) {
-  const storeName = store.store_name?.trim() || "EXPRESS TELEFONIA";
+  const storeName = store.store_name?.trim() || getAgServiziExpressStoreNameFallback();
   const subtotalLines = receipt.lines.reduce((s, l) => s + Number(l.lineTotal), 0);
   const discount = Number(receipt.discount ?? 0);
   const hasTaxable = saleHasTaxableLines(receipt.lines);

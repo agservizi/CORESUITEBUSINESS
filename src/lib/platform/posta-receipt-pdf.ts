@@ -1,5 +1,6 @@
 import PDFDocument from "pdfkit";
 import type { PostaMessage, Client } from "@/generated/prisma";
+import { getAgServiziPdfLetterhead } from "@/config/ag-servizi-company";
 import { getChannelMailConfig } from "@/lib/mail/pec-config";
 import {
   buildOnBehalfFromName,
@@ -67,6 +68,8 @@ export async function generatePostaReceiptPdf(message: PostaMessageWithClient): 
   const bodyPreview =
     message.body.length > 1200 ? `${message.body.slice(0, 1200).trim()}…` : message.body.trim();
 
+  const letterhead = getAgServiziPdfLetterhead();
+
   return new Promise((resolve, reject) => {
     const doc = new PDFDocument({ size: "A4", margin: 48 });
     const chunks: Buffer[] = [];
@@ -74,7 +77,8 @@ export async function generatePostaReceiptPdf(message: PostaMessageWithClient): 
     doc.on("end", () => resolve(Buffer.concat(chunks)));
     doc.on("error", reject);
 
-    doc.fontSize(18).fillColor("#5b21b6").text("AG Servizi — Coresuite", { align: "center" });
+    doc.fontSize(18).fillColor("#5b21b6").text(letterhead.title, { align: "center" });
+    doc.fontSize(9).fillColor("#64748b").text(letterhead.address, { align: "center" });
     doc.fontSize(13).fillColor("#111827").text("Ricevuta posta telematica", { align: "center" });
     doc.moveDown(0.3);
     doc.fontSize(9).fillColor("#6b7280").text(`Riferimento ${refCode}`, { align: "center" });

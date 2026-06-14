@@ -24,6 +24,7 @@ import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import { useRouter } from "next/navigation";
+import { navigateResolved } from "@/lib/navigate-resolved";
 import { type BusinessSection } from "@/lib/business-navigation";
 import { useBusinessNavigation } from "@/context/BusinessNavigationProvider";
 import {
@@ -131,7 +132,7 @@ export default function BusinessSidebar({ open, onToggle, width, collapsedWidth 
       <Divider sx={{ borderColor: "divider" }} />
       <List dense sx={{ px: 1, py: 1 }}>
         <Tooltip title={!open ? "Torna al Hub" : ""} placement="right">
-          <ListItemButton onClick={() => router.push("/dashboard")} sx={{ borderRadius: 2 }}>
+          <ListItemButton onClick={() => navigateResolved(router, "/dashboard")} sx={{ borderRadius: 2 }}>
             <ListItemIcon sx={{ minWidth: 36 }}>
               <ArrowBackIcon fontSize="small" />
             </ListItemIcon>

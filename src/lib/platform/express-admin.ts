@@ -1,13 +1,20 @@
 import { prisma } from "@/lib/prisma";
 import type { Prisma } from "@/generated/prisma";
+import { getAgServiziExpressStoreDefaults } from "@/config/ag-servizi-company";
 import { getProviderInsights } from "@/lib/platform/express-analytics";
 import { computeCampaignDiscount } from "@/lib/platform/express-discount";
 
 export { computeCampaignDiscount };
 
+function storeTextField(value: unknown, fallback: string) {
+  const text = value == null ? "" : String(value).trim();
+  return text || fallback;
+}
+
 export async function getExpressSettingsRecord() {
   const settings = await prisma.expressSettings.findUnique({ where: { id: "default" } });
   const data = (settings?.data ?? {}) as Record<string, unknown>;
+  const storeDefaults = getAgServiziExpressStoreDefaults();
   return {
     ...data,
     default_vat: Number(data.default_vat ?? 22),
@@ -26,13 +33,13 @@ export async function getExpressSettingsRecord() {
     notify_staff_on_sale: Boolean(data.notify_staff_on_sale ?? true),
     receipt_counter: Number(data.receipt_counter ?? 1),
     fiscal_rt_enabled: Boolean(data.fiscal_rt_enabled ?? false),
-    store_name: String(data.store_name ?? "AG SERVIZI VIA PLINIO 72 DI CAVALIERE CARMINE"),
-    store_address: String(data.store_address ?? "Via Plinio 72"),
-    store_city: String(data.store_city ?? ""),
-    store_vat: String(data.store_vat ?? ""),
-    store_phone: String(data.store_phone ?? ""),
-    store_email: String(data.store_email ?? ""),
-    receipt_footer: String(data.receipt_footer ?? "Grazie per aver scelto i nostri servizi"),
+    store_name: storeTextField(data.store_name, storeDefaults.store_name),
+    store_address: storeTextField(data.store_address, storeDefaults.store_address),
+    store_city: storeTextField(data.store_city, storeDefaults.store_city),
+    store_vat: storeTextField(data.store_vat, storeDefaults.store_vat),
+    store_phone: storeTextField(data.store_phone, storeDefaults.store_phone),
+    store_email: storeTextField(data.store_email, storeDefaults.store_email),
+    receipt_footer: storeTextField(data.receipt_footer, storeDefaults.receipt_footer),
     store_logo: typeof data.store_logo === "string" ? data.store_logo : "",
   };
 }
@@ -566,17 +573,6 @@ export async function notifyExpressSale(userId: string, saleId: string, total: n
       type: "express_sale",
       link: `/services/express?view=vendite&id=${saleId}`,
     },
-  });
-}
-
-export async function seedDefaultCampaignsIfEmpty() {
-  const count = await prisma.expressDiscountCampaign.count();
-  if (count > 0) return;
-  await prisma.expressDiscountCampaign.createMany({
-    data: [
-      { name: "Benvenuto 5€", description: "Sconto fisso nuovi clienti", type: "Fixed", value: 5, active: true },
-      { name: "Promo 10%", description: "Sconto percentuale", type: "Percent", value: 10, active: true },
-    ],
   });
 }
 

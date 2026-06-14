@@ -6,8 +6,17 @@ import "./globals.css";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Coresuite — Service Hub",
+  title: {
+    default: "Coresuite — Service Hub",
+    template: "%s | Coresuite",
+  },
   description: "Il tuo hub di servizi aziendali integrati",
+  applicationName: "Coresuite",
+  icons: {
+    icon: [{ url: "/icon.svg", type: "image/svg+xml" }],
+    shortcut: "/icon.svg",
+    apple: [{ url: "/apple-icon.svg", type: "image/svg+xml" }],
+  },
 };
 
 export default function RootLayout({

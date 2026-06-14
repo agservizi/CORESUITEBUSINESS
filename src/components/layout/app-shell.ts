@@ -81,6 +81,8 @@ export const topbarShellSx: ShellSxFn = (theme) => {
 
 export {
   topbarActionsSx,
+  topbarToolsGroupSx,
+  topbarIconButtonSx,
   topbarUserBlockSx,
   topbarAvatarSx,
 } from "./AppShellTopBarActions";
@@ -115,3 +117,6 @@ export { AppDateLocalizationProvider } from "./AppDateLocalizationProvider";
 export { default as AppShellTopBarActions } from "./AppShellTopBarActions";
 export type { AppShellTopBarUser } from "./AppShellTopBarActions";
 export { getAppShellUserInitials } from "./AppShellTopBarActions";
+export { default as AppShellFooter } from "./AppShellFooter";
+export type { AppShellFooterProps } from "./AppShellFooter";
+export { default as AppShellMainColumn } from "./AppShellMainColumn";

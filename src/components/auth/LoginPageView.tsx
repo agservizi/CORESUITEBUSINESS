@@ -27,6 +27,7 @@ import { getShellTokens, mergeShellSx, shellPanelSx } from "@/theme/shell-tokens
 import ThemeModeToggle from "@/components/layout/ThemeModeToggle";
 import LoginBrandPanel from "@/components/auth/LoginBrandPanel";
 import HubAmbientBackground from "@/components/hub/HubAmbientBackground";
+import CoresuiteLogo from "@/components/brand/CoresuiteLogo";
 import { hubFadeUp } from "@/lib/hub-motion";
 import { resolveNavigationTarget } from "@/lib/platform-hosts";
 
@@ -142,23 +143,8 @@ export default function LoginPageView() {
             animate={reduce ? undefined : "show"}
             sx={{ width: "100%", maxWidth: 440 }}
           >
-            <Box sx={{ textAlign: "center", mb: 3, display: { md: "none" } }}>
-              <Box
-                sx={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  width: 56,
-                  height: 56,
-                  borderRadius: 2.5,
-                  background: GRADIENT,
-                  mb: 1.5,
-                  boxShadow: `0 12px 40px ${alpha("#6366f1", 0.35)}`,
-                }}
-              >
-                <Typography sx={{ fontSize: 26, fontWeight: 900, color: "#fff" }}>C</Typography>
-              </Box>
-              <Typography sx={{ fontWeight: 800, fontSize: "1.2rem" }}>Coresuite</Typography>
+            <Box sx={{ display: { xs: "flex", md: "none" }, justifyContent: "center", mb: 3 }}>
+              <CoresuiteLogo size="md" link={false} />
             </Box>
 
             <Box
@@ -363,14 +349,6 @@ export default function LoginPageView() {
                 )}
               </Button>
             </Box>
-
-            <Typography
-              variant="caption"
-              color="text.secondary"
-              sx={{ display: "block", textAlign: "center", mt: 3 }}
-            >
-              © {new Date().getFullYear()} Coresuite
-            </Typography>
           </Box>
         </Box>
       </Box>

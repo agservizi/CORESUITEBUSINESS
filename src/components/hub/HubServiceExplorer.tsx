@@ -1,14 +1,19 @@
 "use client";
 
-import { Box, Typography, ToggleButton, ToggleButtonGroup } from "@mui/material";
+import { Box, Typography } from "@mui/material";
 import { AnimatePresence, motion, LayoutGroup } from "framer-motion";
 import PremiumServiceCard from "./PremiumServiceCard";
+import HubEmptyWorkspace from "./HubEmptyWorkspace";
 import { HUB_CATEGORIES, filterByCategory, type HubCategory } from "@/lib/hub-categories";
 import { getServiceCategory } from "@/lib/hub-categories";
 import type { PlatformServiceConfig } from "@/config/platform-services";
 import { getServiceLaunchUrl } from "@/lib/platform-hosts";
 import { getShellTokens } from "@/theme/shell-tokens";
-import { hubGridItem } from "@/lib/hub-motion";
+import { hubGridItem, hubSpring } from "@/lib/hub-motion";
+import { hubGridSx } from "@/lib/hub-layout";
+import type { HubLayoutDensity } from "@/lib/hub-layout";
+import { getServiceHoverStats } from "@/lib/hub-service-stats";
+import { useHubOperationsOptional } from "@/context/HubOperationsProvider";
 
 interface HubServiceExplorerProps {
   services: PlatformServiceConfig[];
@@ -17,6 +22,8 @@ interface HubServiceExplorerProps {
   startIndex?: number;
   pinnedSlugs?: string[];
   onTogglePin?: (slug: string) => void;
+  density?: HubLayoutDensity;
+  highlighted?: boolean;
 }
 
 const CATEGORY_LABELS: Record<string, string> = {
@@ -34,14 +41,32 @@ export default function HubServiceExplorer({
   startIndex = 0,
   pinnedSlugs = [],
   onTogglePin,
+  density = "comfortable",
+  highlighted = false,
 }: HubServiceExplorerProps) {
+  const ops = useHubOperationsOptional();
   const filtered = filterByCategory(
     services.filter((s) => !["operations", "business"].includes(s.slug)),
     category
   );
 
   return (
-    <Box>
+    <Box
+      component={motion.div}
+      animate={
+        highlighted
+          ? {
+              boxShadow: [
+                "0 0 0 0 rgba(99,102,241,0)",
+                "0 0 0 4px rgba(99,102,241,0.4)",
+                "0 0 0 0 rgba(99,102,241,0)",
+              ],
+            }
+          : { boxShadow: "0 0 0 0 rgba(99,102,241,0)" }
+      }
+      transition={{ duration: 1.8, ease: "easeInOut" }}
+      sx={{ borderRadius: 3, p: highlighted ? 0.5 : 0 }}
+    >
       <Box
         sx={{
           display: "flex",
@@ -58,53 +83,70 @@ export default function HubServiceExplorer({
             {filtered.length} moduli disponibili
           </Typography>
         </Box>
-        <ToggleButtonGroup
-          value={category}
-          exclusive
-          onChange={(_, v) => v && onCategoryChange(v)}
-          size="small"
-          sx={{
+
+        <Box
+          sx={(theme) => ({
+            position: "relative",
+            display: "flex",
             flexWrap: "wrap",
             gap: 0.5,
-            "& .MuiToggleButton-root": {
-              border: (theme) => getShellTokens(theme).border,
-              borderRadius: "8px !important",
-              mx: 0.25,
-              py: 0.5,
-              px: 1.5,
-              fontSize: "0.75rem",
-              textTransform: "none",
-              color: "text.secondary",
-              "&.Mui-selected": {
-                background: "rgba(99,102,241,0.15)",
-                color: "primary.light",
-                borderColor: "rgba(99,102,241,0.3)",
-              },
-            },
-          }}
+            p: 0.5,
+            borderRadius: 2,
+            border: getShellTokens(theme).border,
+            bgcolor: getShellTokens(theme).hover,
+          })}
         >
-          {HUB_CATEGORIES.map((c) => (
-            <ToggleButton key={c.id} value={c.id} component={motion.button} whileTap={{ scale: 0.96 }}>
-              {c.label}
-            </ToggleButton>
-          ))}
-        </ToggleButtonGroup>
+          {HUB_CATEGORIES.map((c) => {
+            const selected = category === c.id;
+            return (
+              <Box
+                key={c.id}
+                component="button"
+                type="button"
+                onClick={() => onCategoryChange(c.id)}
+                sx={{
+                  position: "relative",
+                  border: "none",
+                  background: "transparent",
+                  cursor: "pointer",
+                  px: 1.5,
+                  py: 0.75,
+                  borderRadius: 1.5,
+                  zIndex: 1,
+                }}
+              >
+                {selected && (
+                  <Box
+                    component={motion.div}
+                    layoutId="hub-category-pill"
+                    transition={hubSpring}
+                    sx={{
+                      position: "absolute",
+                      inset: 0,
+                      borderRadius: 1.5,
+                      bgcolor: "rgba(99,102,241,0.15)",
+                      border: "1px solid rgba(99,102,241,0.3)",
+                    }}
+                  />
+                )}
+                <Typography
+                  sx={{
+                    position: "relative",
+                    fontSize: "0.75rem",
+                    fontWeight: selected ? 700 : 500,
+                    color: selected ? "primary.light" : "text.secondary",
+                  }}
+                >
+                  {c.label}
+                </Typography>
+              </Box>
+            );
+          })}
+        </Box>
       </Box>
 
       <LayoutGroup>
-        <Box
-          component={motion.div}
-          layout
-          sx={{
-            display: "grid",
-            gridTemplateColumns: {
-              xs: "1fr",
-              sm: "repeat(2, 1fr)",
-              lg: "repeat(3, 1fr)",
-            },
-            gap: 2,
-          }}
-        >
+        <Box component={motion.div} layout sx={hubGridSx()}>
           <AnimatePresence mode="popLayout">
             {filtered.map((service, i) => (
               <motion.div
@@ -122,9 +164,11 @@ export default function HubServiceExplorer({
                   {...service}
                   url={getServiceLaunchUrl(service.slug)}
                   index={startIndex + i}
+                  density={density}
                   categoryLabel={CATEGORY_LABELS[getServiceCategory(service.slug)]}
                   pinned={pinnedSlugs.includes(service.slug)}
                   onTogglePin={onTogglePin}
+                  hoverStats={getServiceHoverStats(service.slug, ops?.kpi ?? null, ops?.express ?? null)}
                   animateEntrance={false}
                 />
               </motion.div>
@@ -135,15 +179,18 @@ export default function HubServiceExplorer({
 
       <AnimatePresence>
         {filtered.length === 0 && (
-          <Box
-            component={motion.div}
+          <motion.div
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0 }}
-            sx={{ py: 6, textAlign: "center", color: "text.secondary" }}
+            exit={{ opacity: 0, y: -8 }}
           >
-            Nessun servizio in questa categoria
-          </Box>
+            <Box sx={{ ...hubGridSx(), mt: 0 }}>
+              <HubEmptyWorkspace
+                title="Nessun servizio in questa categoria"
+                description="Prova un'altra categoria o usa Ctrl+K per trovare un modulo."
+              />
+            </Box>
+          </motion.div>
         )}
       </AnimatePresence>
     </Box>

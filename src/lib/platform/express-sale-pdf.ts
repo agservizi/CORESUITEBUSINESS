@@ -26,8 +26,9 @@ export async function generateExpressSalePdf(saleId: string): Promise<Buffer | n
     doc.on("end", () => resolve(Buffer.concat(chunks)));
   });
 
-  doc.fontSize(16).text(String(settings.store_name || "Express"), { align: "center" });
+  doc.fontSize(16).text(String(settings.store_name), { align: "center" });
   doc.fontSize(10).text(String(settings.store_address || ""), { align: "center" });
+  if (settings.store_city) doc.text(String(settings.store_city), { align: "center" });
   if (settings.store_vat) doc.text(`P.IVA ${settings.store_vat}`, { align: "center" });
   doc.moveDown();
 

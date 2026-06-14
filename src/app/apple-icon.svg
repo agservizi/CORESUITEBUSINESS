@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 180" fill="none">
+  <defs>
+    <linearGradient id="coresuite-mark-gradient" x1="34" y1="22" x2="158" y2="158" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#6366f1"/>
+      <stop stop-color="#7c3aed" offset="0.52"/>
+      <stop stop-color="#8b5cf6" offset="1"/>
+    </linearGradient>
+  </defs>
+  <rect width="180" height="180" rx="40" fill="url(#coresuite-mark-gradient)"/>
+  <path d="M110.2 58.5c-17.4-8.4-38.2-6.2-51.7 7.3-15.7 15.7-15.7 41.5 0 57.2 13.5 13.5 34.3 15.7 51.7 7.3" stroke="#fff" stroke-width="13.2" stroke-linecap="round" fill="none"/>
+  <circle cx="69.8" cy="90" r="13.2" fill="#fff"/>
+  <circle cx="122.6" cy="63" r="7.6" fill="#fff" fill-opacity="0.88"/>
+  <path d="M79.9 81 115.9 66.5" stroke="#fff" stroke-width="6.5" stroke-linecap="round" stroke-opacity="0.55"/>
+</svg>

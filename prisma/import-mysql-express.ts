@@ -23,6 +23,58 @@ function dateOrNull(v: unknown) {
   return Number.isNaN(d.getTime()) ? null : d;
 }
 
+function mapRole(ruolo: unknown): "SUPER_ADMIN" | "ADMIN" | "MANAGER" | "OPERATORE" | "PATRONATO" | "CLIENTE" | "COLLABORATORE" {
+  const map: Record<string, "SUPER_ADMIN" | "ADMIN" | "MANAGER" | "OPERATORE" | "PATRONATO" | "CLIENTE" | "COLLABORATORE"> = {
+    Admin: "ADMIN",
+    Manager: "MANAGER",
+    Operatore: "OPERATORE",
+    Patronato: "PATRONATO",
+    Cliente: "CLIENTE",
+    Collaboratore: "COLLABORATORE",
+  };
+  return map[String(ruolo || "Operatore")] || "OPERATORE";
+}
+
+async function importUsers(sql: string) {
+  const userMap = new Map<number, string>();
+  const rows = rowsToObjects(sql, "users");
+  for (const row of rows) {
+    const mysqlId = Number(row.id);
+    const email = String(row.email || "").trim().toLowerCase();
+    if (!email) continue;
+    const role = mysqlId === 1 ? "SUPER_ADMIN" : mapRole(row.ruolo);
+    const user = await prisma.user.upsert({
+      where: { email },
+      create: {
+        email,
+        username: row.username ? String(row.username) : null,
+        name: [row.nome, row.cognome].filter(Boolean).join(" ").trim() || String(row.username || email),
+        firstName: row.nome ? String(row.nome) : null,
+        lastName: row.cognome ? String(row.cognome) : null,
+        password: String(row.password),
+        role,
+        mfaSecret: row.mfa_secret ? String(row.mfa_secret) : null,
+        mfaEnabled: Number(row.mfa_enabled) === 1,
+        lastLoginAt: dateOrNull(row.last_login_at),
+      },
+      update: {
+        username: row.username ? String(row.username) : null,
+        name: [row.nome, row.cognome].filter(Boolean).join(" ").trim() || String(row.username || email),
+        firstName: row.nome ? String(row.nome) : null,
+        lastName: row.cognome ? String(row.cognome) : null,
+        password: String(row.password),
+        role,
+        mfaSecret: row.mfa_secret ? String(row.mfa_secret) : null,
+        mfaEnabled: Number(row.mfa_enabled) === 1,
+        lastLoginAt: dateOrNull(row.last_login_at),
+      },
+    });
+    userMap.set(mysqlId, user.id);
+  }
+  console.log(`✅ Utenti importati: ${userMap.size}`);
+  return userMap;
+}
+
 async function main() {
   if (!fs.existsSync(DUMP_PATH)) {
     console.error(`Dump non trovato: ${DUMP_PATH}`);
@@ -32,6 +84,8 @@ async function main() {
 
   console.log(`📂 Lettura dump: ${DUMP_PATH}`);
   const sql = fs.readFileSync(DUMP_PATH, "utf8");
+
+  const userMap = await importUsers(sql);
 
   const clientRows = rowsToObjects(sql, "clienti");
   console.log(`👥 Clienti nel dump: ${clientRows.length}`);
@@ -311,11 +365,13 @@ async function main() {
   console.log(`✅ Richieste Express: ${requestCount}`);
 
   // Pass 2: campagne sconto, PDA, utenti vendite, numeri SIM, IVA righe, cassa
-  const userMap = new Map<number, string>();
-  for (const row of rowsToObjects(sql, "utenti")) {
+  for (const row of rowsToObjects(sql, "users")) {
     const mysqlId = Number(row.id);
-    const user = await prisma.user.findFirst({ where: { email: String(row.email || "") } });
-    if (user) userMap.set(mysqlId, user.id);
+    if (!userMap.has(mysqlId)) {
+      const email = String(row.email || "").trim().toLowerCase();
+      const user = email ? await prisma.user.findUnique({ where: { email } }) : null;
+      if (user) userMap.set(mysqlId, user.id);
+    }
   }
 
   let campaignCount = 0;
